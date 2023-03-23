@@ -1,229 +1,207 @@
 import numpy as np
 
-from numpy.fft import fftn, ifftn
-from scipy.interpolate import griddata
-from scipy.interpolate import interpn, RegularGridInterpolator
+import matplotlib.pyplot as plt
 
-import pyvista as pv
-import meshio
-
-from scipy.ndimage import gaussian_filter
+from scipy.interpolate import RegularGridInterpolator
+from scipy.fft import fftn, ifftn
 
 from random_fields.correlation_functions import *
-# np.random.seed(seed=15)
-class Field():
 
-    def __init__(self, model, coordinates):
+np.random.seed(14)
 
+
+class Field:
+
+    def __init__(self, model, coordinates, mu, sigma):
+
+        self.coordinates = coordinates
         self.ndim = coordinates.shape[1]
 
         self.correlation_model = model
         self.correlation_model.ndim = self.ndim
 
-        self.x_start = None
-        self.x_end = None
-        self.num_x = None
+        # mean and std
+        self.mu = mu
+        self.sigma = sigma
 
-        self.y_start = None
-        self.y_end = None
-        self.num_y = None
-
-        self.z_start = None
-        self.z_end = None
-        self.num_z = None
-
+        # structured coordinates
         self.struct_x = None
         self.struct_y = None
         self.struct_z = None
 
-        self.centroids = None
-        self.structured_field = None
+        # coordinates on which the random field is isotropic
+        self.isotropic_x = None
+        self.isotropic_y = None
+        self.isotropic_z = None
 
-        self.coordinates = coordinates
+        self.isotropic_field = None
+        self.unstructured_field = None
 
-        self.n_points = [300,300,300]
+        # number of points to generate the structured random field on
+        self.n_points = [300, 300, 300]
 
         pass
 
+    def isometrise_coordinates(self):
+        """
+        Calculate coordinates on which random field is isotropic
+
+        :return:
+        """
+        self.isotropic_x = self.struct_x * self.correlation_model.rho_x
+        self.isotropic_y = self.struct_y * self.correlation_model.rho_y
+
+        if self.ndim == 3:
+            self.isotropic_z = self.struct_z * self.correlation_model.rho_z
+
+    def define_interpolator(self):
+        """
+        Defines the interpolator from a regular grid
+        :return:
+        """
+
+        if self.ndim == 2:
+            return RegularGridInterpolator((self.isotropic_x, self.isotropic_y), self.isotropic_field, method='linear')
+        elif self.ndim == 3:
+            return RegularGridInterpolator((self.isotropic_x, self.isotropic_y, self.isotropic_z),
+                                           self.isotropic_field, method='linear')
 
     def interpolate_to_mesh(self):
+        """
+        Interpolate an isotropic structured random field to an unstructured mesh
+        :return:
+        """
 
-        # X1, Y1, Z1 = np.meshgrid(self.struct_x,self.struct_y, self.struct_z, indexing='ij',
-        #                       sparse=False)
+        # rescale coordinates such that random field on these coordinates is isotropic
+        self.isometrise_coordinates()
 
-        self.correlation_model.isometrise_coordinates()
+        # generate interpolator
+        interpolator = self.define_interpolator()
 
-        if self.ndim ==2:
-            interpolator = RegularGridInterpolator((self.correlation_model.isotropic_x,
-                                                    self.correlation_model.isotropic_y), self.structured_field,
-                                                   method='linear')
-            self.unstructured_field = interpolator(self.coordinates)
-        elif self.ndim ==3:
-            interpolator = RegularGridInterpolator((self.correlation_model.isotropic_x,self.correlation_model.isotropic_y, self.correlation_model.isotropic_z), self.structured_field, method='linear')
-            self.unstructured_field  = interpolator(self.coordinates)
+        # interpolate isotropic random field to unstructured grid
+        self.unstructured_field = interpolator(self.coordinates)
 
+        # normalise unstructured field
+        self.unstructured_field = (self.unstructured_field - np.mean(self.unstructured_field)) \
+                                  / np.std(self.unstructured_field)
 
-        # normalize unstructured field
-        self.unstructured_field = (self.unstructured_field- self.correlation_model.mu)/np.std(self.unstructured_field)
+        # rescale unstructured field
+        self.unstructured_field = self.unstructured_field * self.sigma + self.mu
 
-        self.unstructured_field = self.unstructured_field * self.correlation_model.var + self.correlation_model.mu
+    def initialise(self):
+        """
+        Initialises the field
 
-        # tmp1 = pv.UnstructuredGrid(self.coordinates)
-        # grid = pv.StructuredGrid(X1, Y1, Z1)
-        #
-        # tmp = grid.interpolate(self.coordinates)
-        #
-        # self.unstructured_field = interpn((self.struct_x, self.struct_y , self.struct_z), self.structured_field, self.coordinates)
-        #
-        # # self.unstructured_field = griddata((X1, Y1, Z1), self.structured_field.ravel(), (X,Y,Z),
-        # #                                    method="linear")
+        :return:
+        """
+        self.generate_structured_coordinates()
 
     def generate_structured_coordinates(self):
+        """
+        Generates a set of structured coordinates based on the unstructured coordinate limits
+        :return:
+        """
 
-        min_x,max_x = self.coordinates[:,0].min(), self.coordinates[:,0].max()
+        # find coordinate limits
+        min_x, max_x = self.coordinates[:, 0].min(), self.coordinates[:, 0].max()
         min_y, max_y = self.coordinates[:, 1].min(), self.coordinates[:, 1].max()
 
-
-        self.struct_x = np.linspace(min_x,max_x, self.n_points[0])
+        # discretise coordinates
+        self.struct_x = np.linspace(min_x, max_x, self.n_points[0])
         self.struct_y = np.linspace(min_y, max_y, self.n_points[1])
 
-
+        # transfer coordinates to correlation model
         self.correlation_model.x = self.struct_x
         self.correlation_model.y = self.struct_y
 
-
-        if self.ndim ==3:
+        if self.ndim == 3:
             min_z, max_z = self.coordinates[:, 2].min(), self.coordinates[:, 2].max()
             self.struct_z = np.linspace(min_z, max_z, self.n_points[2])
             self.correlation_model.z = self.struct_z
 
-    def generate_field(self):
+    def generate_random_field(self):
+        """
+        Generates a random field on a unstructured mesh
 
-        self.structured_cor = self.correlation_model.compute_auto_cor_matrix()
+        :return:
+        """
+        self.initialise()
+        self.generate_structured_isotropic_field()
+        self.interpolate_to_mesh()
 
-        # if self.ndim ==2:
-        #     # phi = np.random.rand(self.n_points[0],self.n_points[1])
-        #     phi = np.random.rand(self.n_points[0] // 2, self.n_points[1] // 2)
-        #     # Make it symmetric to satisfy phi(-k) = -phi(k)
-        #     phi_symm = np.concatenate((-phi[::-1, :], phi), axis=0)  # Symmetrize along x-axis
-        #     phi_symm = np.concatenate((-phi_symm[:, ::-1], phi_symm), axis=1)  # Symmetrize along y-axis
-        # elif self.ndim ==3:
-        #     # Generate a random phase array with uniform distribution in [0,1]
-        #     phi = np.random.rand(self.n_points[0] // 2, self.n_points[1] // 2, self.n_points[2] // 2)
-        #
-        #     # Make it symmetric to satisfy phi(-k) = -phi(k)
-        #     phi_symm = np.concatenate((-phi[::-1, :, :], phi), axis=0)  # Symmetrize along x-axis
-        #     phi_symm = np.concatenate((-phi_symm[:, ::-1, :], phi_symm), axis=1)  # Symmetrize along y-axis
-        #     phi_symm = np.concatenate((-phi_symm[:, :, ::-1], phi_symm), axis=2)  # Symmetrize along z-axis
-        #     # phi = np.random.rand(self.n_points[0], self.n_points[1], self.n_points[2])
-        # else:
-        #     phi_symm = 0
-        #
-        #
-        # # Compute the phase term as exp(2j*pi*phi)
-        # phase = np.exp(2j * np.pi * phi_symm)
+    def generate_structured_isotropic_field(self):
+        """
+        Generates a isotropic random field on a structured mesh. Firstly, the auto correlation matrix is generated,
+        while not taking into account scale of fluctuation. Then the autocorrelation matrix is multiplied with a
+        set of normally distributed samples in the frequency domain. Lastly the field is transformed to the spatial
+        domain.
 
-        self.structured_cor = gaussian_filter(self.structured_cor,3)
+        :return:
+        """
 
-        F = np.fft.fftn(self.structured_cor)
+        # compute structured isotropic auto correlation field
+        structured_cor = self.correlation_model.compute_auto_cor_matrix()
+
+        # transform correlation field and normal distribution samples
+        fft_correlation = np.fft.fftn(structured_cor)
+        fft_normal_distribution = fftn(np.random.normal(size=(self.n_points[:self.ndim])))
 
         # Generate random field
-        self.structured_field = np.real(np.fft.ifftn(np.sqrt(F) * np.fft.fftn(np.random.normal(size=(self.n_points[0], self.n_points[1])))))
+        self.isotropic_field = np.real(ifftn(np.sqrt(fft_correlation) * fft_normal_distribution))
 
         # normalize field to maintain correct std
-        self.structured_field = self.structured_field/np.std(self.structured_field)
+        self.isotropic_field = self.isotropic_field / np.std(self.isotropic_field)
 
         # rescale structured field
-        self.structured_field = self.structured_field*self.correlation_model.var + self.correlation_model.mu
+        self.isotropic_field = self.isotropic_field * self.sigma + self.mu
 
-        # self.structured_field  * np.exp(-0.5 * (xx ** 2 + yy ** 2) / sf ** 2)
+    def plot_2d_field(self):
 
-        # XX,YY = self.correlation_model.compute_meshgrid()
+        from matplotlib.tri import Triangulation
 
-        # self.structured_field = self.structured_field * self.correlation_model.var * np.exp(-((XX/self.correlation_model.rho_x) ** 2 + (YY/self.correlation_model.rho_y) ** 2))
+        # generate triangles
+        triangles = Triangulation(self.coordinates[:, 0], coordinates[:, 1])
 
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
 
-        # Generate the random field by inverse Fourier transform of sqrt(fft(C))*phase
-        # self.structured_field = (ifftn_sc(np.sqrt(fftn_sc(self.structured_cor - np.mean(self.structured_cor))) * phase)).real
+        # generate filled contour plot
+        cont = ax.tricontourf(triangles, self.unstructured_field)
 
-        # tmp = fftn_sc(self.structured_cor )
-        # self.structured_field= (ifftn_sc(np.sqrt(tmp) * phase)).real
-
-        # self.structured_field = (ifftn_sc(np.sqrt(fftn_sc(self.structured_cor )) * phase)).real
-
-
+        # add color bar
+        plt.colorbar(cont)
+        plt.show()
 
 
 if __name__ == '__main__':
-    # a = np.linspace(0, 300)
+    mu = 0
+    sigma = 5
 
-    # from scipy.stats import norm
-    # x = np.linspace(-4, 4, 100)
-    #
-    # p_1 = norm.pdf(x, 0, 1)
-    # p_5 = norm.pdf(x, -0.007, 1)
-    # # p_5 = norm.pdf(x, 0, 0.97)
-    # # p_15 = norm.pdf(x, 0, 0.95)
-    #
-    # plt.plot(x,p_1)
-    # plt.plot(x, p_5)
-    # # plt.plot(x, p_15)
-    # plt.show()
+    model = GaussianCorrelation(1, (20, 1, 1))
 
-
-    model = ExponentialCorrelation(0,1,1,(40,1,10))
-
-    x_coords = np.linspace(-10,10,200)
+    # generate coordinates field
+    x_coords = np.linspace(-10, 10, 200)
     y_coords = np.linspace(-10, 10, 200)
 
-    X,Y = np.meshgrid(x_coords, y_coords,indexing='ij')
+    X, Y = np.meshgrid(x_coords, y_coords, indexing='ij')
 
     X = np.ravel(X)
-    Y= np.ravel(Y)
+    Y = np.ravel(Y)
 
-    coordinates = np.array([X,Y]).T
-    # coordinates = np.random.rand(19200,2)*20 - 10
+    coordinates = np.array([X, Y]).T
 
-    field = Field(model, coordinates)
+    # initialise field
+    field = Field(model, coordinates, mu, sigma)
 
-    field.generate_structured_coordinates()
-    field.generate_field()
+    field.generate_random_field()
 
-    # import cProfile
+    field.plot_2d_field()
+
+    # # ax.scatter(coordinates[:,0],coordinates[:,1],coordinates[:,2], c=f)
     #
-    # cProfile.run('field.interpolate_to_mesh()', 'profile_random_field')
-    field.interpolate_to_mesh()
-
-    f = field.unstructured_field
-
-    reshaped_field = np.reshape(f, (200, 200))
-    from scipy.stats import norm
-
-    mu, std = norm.fit(f)
-
-    s = np.ones(len(f))*20
-    from mpl_toolkits.mplot3d import Axes3D
-
-    from matplotlib.tri import Triangulation
-
-    triangles = Triangulation(coordinates[:,0], coordinates[:,1])
-    # triangles2 = Triangulation(field.correlation_model.i[:, 0], coordinates[:, 1])
-
-
-
-
-    fig = plt.figure()
-    # ax = fig.add_subplot(111, projection='3d')
-    ax = fig.add_subplot(111)
-    cont = ax.tricontourf(triangles, f)
-
-    colorbar = plt.colorbar(cont)
-    # ax.scatter(coordinates[:,0],coordinates[:,1],coordinates[:,2], c=f)
-
-    plt.show()
-
-
-    # plt.imshow(field.structured_field[:,:,150].T)
-    # tmp = plt.imshow(field.structured_field[:, :].T)
-    # colorbar = plt.colorbar(tmp)
     # plt.show()
+    #
+    # # plt.imshow(field.structured_field[:,:,150].T)
+    # # tmp = plt.imshow(field.structured_field[:, :].T)
+    # # colorbar = plt.colorbar(tmp)
+    # # plt.show()
