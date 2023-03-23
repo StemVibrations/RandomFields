@@ -4,8 +4,7 @@ from numpy.fft import fftn, ifftn
 from scipy.interpolate import griddata
 from scipy.interpolate import interpn, RegularGridInterpolator
 from scipy.stats import norm
-import pyvista as pv
-import meshio
+
 
 import pytest
 
@@ -62,6 +61,11 @@ class TestField():
 
 
     def test_mu_and_sigma(self):
+        """
+        Checks if the mean and standard deviation of the random field are maintain
+
+        :return:
+        """
         scale_of_fluct_x = 5
         n_points_x = 400
         n_points_y = 400
@@ -70,8 +74,10 @@ class TestField():
         sigma = 5
         rho = 1
 
-        model = GaussianCorrelation(mu, sigma, rho, (scale_of_fluct_x, 1, 1))
+        # set correlation model
+        model = GaussianCorrelation(rho, (scale_of_fluct_x, 1, 1))
 
+        # generate field coordinates
         x_coords = np.linspace(-10, 10, n_points_x)
         y_coords = np.linspace(-10, 10, n_points_y)
 
@@ -82,22 +88,20 @@ class TestField():
 
         coordinates = np.array([X, Y]).T
 
-        n_fields=1000
-
+        # generate multiple fields
+        n_fields=200
         all_mu_un, all_std_un, all_mu_str, all_std_str = [],[],[],[]
         for i in range(n_fields):
             np.random.seed(i*900)
 
-            field = Field(model, coordinates)
+            field = Field(model, coordinates,mu,sigma)
 
-            field.generate_structured_coordinates()
-            field.generate_field()
+            field.generate_random_field()
 
-            field.interpolate_to_mesh()
-
-            f_str = field.structured_field
+            f_str = field.isotropic_field
             f_un = field.unstructured_field
 
+            # get mu and sigma from the isotropic and unstructured fields
             mu_un, std_un = norm.fit(f_un)
             mu_str, std_str = norm.fit(f_str)
 
@@ -107,14 +111,10 @@ class TestField():
             all_mu_str.append(mu_str)
             all_std_str.append(std_str)
 
+        # assert
+        assert np.mean(all_mu_un) == pytest.approx(mu)
+        assert np.mean(all_std_un) == pytest.approx(sigma)
 
+        assert np.mean(all_mu_str) == pytest.approx(mu)
+        assert np.mean(all_std_str) == pytest.approx(sigma)
 
-        mean_mu_un = np.mean(all_mu_un)
-        mean_std_un = np.mean(all_std_un)
-
-        assert mean_mu_un == pytest.approx(mu)
-        assert mean_std_un == pytest.approx(sigma)
-
-        mean_mu_str = np.mean(all_mu_str)
-        mean_std_str = np.mean(all_std_str)
-        a=1+1

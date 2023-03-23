@@ -150,7 +150,7 @@ class Field:
         self.isotropic_field = np.real(ifftn(np.sqrt(fft_correlation) * fft_normal_distribution))
 
         # normalize field to maintain correct std
-        self.isotropic_field = self.isotropic_field / np.std(self.isotropic_field)
+        self.isotropic_field = (self.isotropic_field - np.mean(self.isotropic_field)) / np.std(self.isotropic_field)
 
         # rescale structured field
         self.isotropic_field = self.isotropic_field * self.sigma + self.mu
@@ -177,16 +177,19 @@ if __name__ == '__main__':
     mu = 0
     sigma = 5
 
-    model = GaussianCorrelation(1, (20, 1, 1))
+    model = ExponentialCorrelation(1, (20, 1, 1))
 
     # generate coordinates field
-    x_coords = np.linspace(-10, 10, 200)
-    y_coords = np.linspace(-10, 10, 200)
+    x_coords = np.linspace(0, 20, 200)
+    y_coords = np.linspace(0, 20, 200)
+    # z_coords = np.linspace(0, 20, 200)
 
+    # X, Y, Z = np.meshgrid(x_coords, y_coords, z_coords, indexing='ij')
     X, Y = np.meshgrid(x_coords, y_coords, indexing='ij')
 
     X = np.ravel(X)
     Y = np.ravel(Y)
+    # Z = np.ravel(Z)
 
     coordinates = np.array([X, Y]).T
 

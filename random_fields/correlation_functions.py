@@ -6,62 +6,71 @@ class BaseCorrelation():
         self.rho_x = rho * anisotrophy[0]
         self.rho_y = rho * anisotrophy[1]
         self.rho_z = rho * anisotrophy[2]
+
         self.x = None
         self.y = None
         self.z = None
 
-        self.scaled_x = None
-        self.scaled_y = None
-        self.scaled_z = None
-
         self.ndim = None
-
-    def compute_auto_cor_matrix(self):
-        pass
-
-    def compute_meshgrid(self):
-
-        if self.ndim == 2:
-            return np.meshgrid(self.x, self.y, indexing='ij', sparse=True)
-        elif self.ndim == 3:
-            return np.meshgrid(self.x, self.y, self.z, indexing='ij', sparse=True)
-
-
-
-class GaussianCorrelation(BaseCorrelation):
-    def __init__(self, rho, anisotrophy=(1, 1, 1)):
-        super(GaussianCorrelation, self).__init__(rho, anisotrophy)
-
 
     def compute_auto_cor_matrix(self):
         """
         Computes auto correlation matrix
+
+        :return:
+        """
+        raise Exception("this is the base function, use the auto cor matrix in the derived class")
+
+    def compute_meshgrid(self):
+        """
+        Computes the mesh grid of the coordinates
+        :return:
+        """
+
+        # set mean of coordinates at 0
+        new_x = self.x - np.mean(self.x)
+        new_y = self.y - np.mean(self.y)
+
+        if self.ndim == 2:
+            return np.asarray(np.meshgrid(new_x, new_y, indexing='ij', sparse=True), dtype=tuple)
+        elif self.ndim == 3:
+            new_z = self.z - np.mean(self.z)
+            return np.asarray(np.meshgrid(new_x, new_y, new_z, indexing='ij', sparse=True), dtype=tuple)
+
+
+class GaussianCorrelation(BaseCorrelation):
+
+    def __init__(self, rho, anisotrophy=(1, 1, 1)):
+        super(GaussianCorrelation, self).__init__(rho, anisotrophy)
+
+    def compute_auto_cor_matrix(self):
+        """
+        Computes auto correlation matrix
+
         :return:
         """
 
         mesh_coords = self.compute_meshgrid()
 
-        r = np.linalg.norm(np.asarray(mesh_coords, dtype=tuple))
+        dist = np.linalg.norm(mesh_coords)
 
-        return np.exp(-(r**2))
+        return np.exp(-(dist**2))
 
-        # if self.ndim == 2:
-        #     return np.exp(-((mesh_coords[0]) ** 2 + (mesh_coords[1]) ** 2))
-        # elif self.ndim == 3:
-        #     return np.exp(-((mesh_coords[0] ) ** 2 + (mesh_coords[1]) ** 2 + (mesh_coords[2]) ** 2))
 
 
 class ExponentialCorrelation(BaseCorrelation):
+
     def __init__(self, rho, anisotrophy=(1, 1, 1)):
         super(ExponentialCorrelation, self).__init__(rho, anisotrophy)
 
-
     def compute_auto_cor_matrix(self):
+        """
+        Computes auto correlation matrix
 
-        mesh_coords= self.compute_meshgrid()
+        :return:
+        """
 
-        if self.ndim== 2:
-            return np.exp(-((mesh_coords[0]) + (mesh_coords[1])))
+        mesh_coords = self.compute_meshgrid()
+        dist = np.linalg.norm(mesh_coords)
 
-        elif self.ndim == 3:
-            return np.exp(-((mesh_coords[0]) + (mesh_coords[1]) + (mesh_coords[2] )))
+        return np.exp(-dist)
