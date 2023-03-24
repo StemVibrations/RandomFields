@@ -74,3 +74,38 @@ class ExponentialCorrelation(BaseCorrelation):
         dist = np.linalg.norm(mesh_coords)
 
         return np.exp(-dist)
+
+
+class SinusoidalCorrelation(BaseCorrelation):
+
+    def __init__(self, rho, anisotrophy=(1, 1, 1)):
+        super(SinusoidalCorrelation, self).__init__(rho, anisotrophy)
+
+    def compute_auto_cor_matrix(self):
+        """
+        Computes auto correlation matrix
+
+        :return:
+        """
+
+        mesh_coords = self.compute_meshgrid()
+        dist = np.linalg.norm(mesh_coords)
+
+        return np.sin(2.2*dist)/(-2.2*dist)
+
+class SecondOrderAutoregressiveCorrelation(BaseCorrelation):
+
+    def __init__(self, rho, anisotrophy=(1, 1, 1)):
+        super(SecondOrderAutoregressiveCorrelation, self).__init__(rho, anisotrophy)
+
+    def compute_auto_cor_matrix(self):
+        """
+        Computes auto correlation matrix
+
+        :return:
+        """
+
+        mesh_coords = self.compute_meshgrid()
+        dist = np.linalg.norm(mesh_coords)
+
+        return (1+dist) * np.exp(-dist)
