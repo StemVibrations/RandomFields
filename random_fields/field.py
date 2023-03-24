@@ -106,6 +106,12 @@ class Field:
         min_x, max_x = self.coordinates[:, 0].min(), self.coordinates[:, 0].max()
         min_y, max_y = self.coordinates[:, 1].min(), self.coordinates[:, 1].max()
 
+        # correct for scale of fluctuation
+        if self.correlation_model.rho_x <1:
+            max_x = (max_x-min_x)/ self.correlation_model.rho_x + min_x
+        if self.correlation_model.rho_y <1:
+            max_y = (max_y - min_y) / self.correlation_model.rho_y + min_y
+
         # discretise coordinates
         self.struct_x = np.linspace(min_x, max_x, self.n_points[0])
         self.struct_y = np.linspace(min_y, max_y, self.n_points[1])
@@ -116,6 +122,10 @@ class Field:
 
         if self.ndim == 3:
             min_z, max_z = self.coordinates[:, 2].min(), self.coordinates[:, 2].max()
+
+            if self.correlation_model.rho_z < 1:
+                max_z = (max_z - min_z) / self.correlation_model.rho_z + min_z
+
             self.struct_z = np.linspace(min_z, max_z, self.n_points[2])
             self.correlation_model.z = self.struct_z
 
@@ -177,7 +187,7 @@ if __name__ == '__main__':
     mu = 0
     sigma = 5
 
-    model = ExponentialCorrelation(1, (20, 1, 1))
+    model = GaussianCorrelation(1, (20, 0.01, 0.01))
 
     # generate coordinates field
     x_coords = np.linspace(0, 20, 200)
