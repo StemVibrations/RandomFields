@@ -170,7 +170,7 @@ class Field:
         from matplotlib.tri import Triangulation
 
         # generate triangles
-        triangles = Triangulation(self.coordinates[:, 0], coordinates[:, 1])
+        triangles = Triangulation(self.coordinates[:, 0], self.coordinates[:, 1])
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -185,9 +185,9 @@ class Field:
 
 if __name__ == '__main__':
     mu = 0
-    sigma = 5
+    sigma = 1
 
-    model = GaussianCorrelation(1, (20, 0.01, 0.01))
+    model = GaussianCorrelation(1, (5, 1, 1))
 
     # generate coordinates field
     x_coords = np.linspace(0, 20, 200)
