@@ -28,13 +28,13 @@ class BaseCorrelation():
         """
 
         # set mean of coordinates at 0
-        new_x = self.x - np.mean(self.x)
-        new_y = self.y - np.mean(self.y)
+        new_x = self.x - np.mean(np.array(self.x))
+        new_y = self.y - np.mean(np.array(self.y))
 
         if self.ndim == 2:
             return np.asarray(np.meshgrid(new_x, new_y, indexing='ij', sparse=True), dtype=tuple)
         elif self.ndim == 3:
-            new_z = self.z - np.mean(self.z)
+            new_z = self.z - np.mean(np.array(self.z))
             return np.asarray(np.meshgrid(new_x, new_y, new_z, indexing='ij', sparse=True), dtype=tuple)
 
 
