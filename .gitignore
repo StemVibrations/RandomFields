@@ -1,0 +1,9 @@
+.vscode
+.idea
+__pycache__
+venv/*
+pytest_cache/*
+build/*
+random_fields.egg-info/*
+.coverage
+.tox/*
