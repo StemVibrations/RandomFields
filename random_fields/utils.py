@@ -96,4 +96,4 @@ def plot2D(coordinates: list, random_field: list, title: str = "Random Field",
     fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap="viridis"), ax=ax, cax=cax)
     fig.suptitle(title)
     plt.savefig(os.path.join(output_folder, output_name))
-    plt.show()
+    plt.close()
