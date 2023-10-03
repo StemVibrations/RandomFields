@@ -1,7 +1,5 @@
 # RandomFields
-
 ![Tests](https://github.com/StemVibrations/RandomFields/actions/workflows/tests.yml/badge.svg)
-
 [![codecov](https://codecov.io/gh/StemVibrations/RandomFields/graph/badge.svg?token=KNV140ZHKQ)](https://codecov.io/gh/StemVibrations/RandomFields)
 
 # Random Fields
