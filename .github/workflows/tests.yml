@@ -41,6 +41,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install .'[testing]'
-          pytest tests --cov=rose --cov-report=html:coverage_report
+          pytest tests --cov=random_fields --cov-report=html:coverage_report
       - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v3
