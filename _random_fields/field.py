@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import RegularGridInterpolator
 from scipy.fft import fftn, ifftn
 
-from random_fields.correlation_functions import *
+from _random_fields.correlation_functions import *
 
 np.random.seed(14)
 

@@ -4,8 +4,8 @@ from scipy.stats import norm
 
 import pytest
 
-from random_fields.correlation_functions import *
-from random_fields.field import Field
+from _random_fields.correlation_functions import *
+from _random_fields.field import Field
 
 from tests.utils import TestUtils
 
