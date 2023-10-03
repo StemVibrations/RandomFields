@@ -3,8 +3,7 @@ name: Tests
 # Controls when the workflow will run
 on:
   push:
-    branches:
-      - main
+    branches: [ "**" ]
   pull_request:
     branches: [ "main" ]
 
