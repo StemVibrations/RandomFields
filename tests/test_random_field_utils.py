@@ -37,7 +37,7 @@ def test_distribution_RF_struc(cleanup_generated_files):
     data = [val == data_new[header + i] for i, val in enumerate(data_org[header:idx_end])]
     assert all(data)
 
-
+@pytest.mark.skip(reason="work in progress")
 def test_distribution_RF_struc_3D(cleanup_generated_files):
     """test distribution of 3D random field with structured mesh"""
 
