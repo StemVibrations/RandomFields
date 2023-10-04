@@ -28,6 +28,8 @@ def plot3D(coordinates: list, random_field: list, title: str = "Random Field",
 
     # make plot
     fig = plt.figure(1, figsize=(6, 5))
+    plt.rcParams['font.sans-serif'] = 'Arial'  # Set a common font
+    plt.rcParams['pdf.fonttype'] = 42  # Ensure that fonts are embedded in PDF/EPS
     ax = fig.add_subplot(projection='3d')
     ax.set_position([0.1, 0.1, 0.8, 0.8])
     # rotate the axes so that y is vertical
@@ -77,6 +79,8 @@ def plot2D(coordinates: list, random_field: list, title: str = "Random Field",
 
     # make plot
     fig, ax = plt.subplots(figsize=(6, 5))
+    plt.rcParams['font.sans-serif'] = 'Arial'  # Set a common font
+    plt.rcParams['pdf.fonttype'] = 42  # Ensure that fonts are embedded in PDF/EPS
     ax.set_position([0.1, 0.1, 0.7, 0.8])
 
     vmin = np.min([np.min(aux) for aux in random_field])
