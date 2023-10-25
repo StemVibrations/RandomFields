@@ -58,7 +58,7 @@ class RandomFields:
         for key in aux_keys:
             if len(key) != n_dim - 1:
                 raise ValueError(f'Number of dimensions: {n_dim} does not match number of\
-                                 random field properties: {len(variance)}. It should be {n_dim - 1}.')
+                                 random field properties: {len(aux_keys)}. It should be {n_dim - 1}.')
 
         self.random_field_model = model_name.value
         self.n_dim = n_dim
