@@ -76,106 +76,10 @@ class ConditionedRandomFields:
         self.angle = angle
         self.v_dim = v_dim
         self.random_field = None
-        self.Z_kriged_field = None
 
 
 
-    def set_conditioning_points(self,
-                                points: np.ndarray,
-                                values: np.ndarray, 
-                                kernel = None     ) -> None:
-        """
-        Initiates the conditioning points and inverts the covariance matrix
-        
-        Parameters:
-        -----------
-        points: array-like
-            The contitioning point coordinates
-        values: array-like
-            The conditioning point values
-        kernel: sklearn kernel
-            The (calibrated) correlation kernel from sklearn
-        """
 
-        if max(points.shape) > 2000:
-            print('too many conditioning points!')
-
-        if kernel == None:
-            kernel = W(0.01) + RBF(length_scale=[1.0]*self.n_dim)    
-
-        self.kernel_ = kernel
-        self.GaussianProcess = GPR(kernel = kernel)
-        self.GaussianProcess.optimizer = None
-        self.GaussianProcess.fit(points,values)
-        self.conditioning_points = points
-        self.conditioning_values = values
-        
-        self.Z_kriged_field == None
-
-
-    def generate(self, nodes: np.ndarray) -> None:
-        """
-        Generate conditioned random field
-
-        Parameters:
-        ------------
-        nodes: list
-            The nodes of the random field
-        """
-        # check dimensions of nodes agrees with dimensions of model
-        if nodes.shape[1] != self.n_dim:
-            raise ValueError(f'Dimensions of nodes: {nodes.shape[1]} do not match dimensions of model: {self.n_dim}')
-
-        # scale of fluctuation
-
-        LS_sklearn = np.array(self.GaussianProcess.kernel_.get_params()['k2__length_scale'])
-        
-        #
-        # create kriged mean field
-        if not isinstance(self.Z_kriged_field, np.ndarray) :
-            print('kriging field for first time')
-            self.Z_kriged_field = self.GaussianProcess.predict(nodes)
-
-
-        f_correct = {'Gaussian':np.sqrt(2 / np.pi),
-                    'Exponential':np.sqrt(1 / 2),
-                    'Matern':np.sqrt(1/ 2 ) }
-
-
-        if not self.random_field_model_name in f_correct.keys():
-            print('!! random field model',self.random_field_model_name,'not implemented... !!')
-
-        #
-        # correct the length scales between libraries
-        LS_gstools = LS_sklearn * f_correct[self.random_field_model_name]
-
-        model = self.random_field_model(dim=self.n_dim, var=1., len_scale=LS_gstools, angles=self.angle)
-        self.random_field = gs.SRF(model, mean=0., seed=self.seed)
-
-        nodes_cpoints = np.vstack([nodes,self.conditioning_points])
-        
-        #
-        # create single random field at nodes and conditioning points
-        self.random_field(nodes_cpoints.T)
-        Z_crf_nodes = self.random_field.field[:nodes.shape[0]]
-        Z_rf_cpoints = self.random_field.field[nodes.shape[0]:]
-
-        #
-        # create kriged mean field of random field 
-        GPrf = GPR(kernel = self.GaussianProcess.kernel_)
-        GPrf.optimizer = None
-        GPrf.fit(self.conditioning_points,Z_rf_cpoints)
-        GPrf.L_ = self.GaussianProcess.L_
-        Z_kriged_nodes_rf = GPrf.predict(nodes)
-
-        #
-        # replace kriged mean field (the kriged parts) to create conditioned random field
-        Z_crf_nodes += self.Z_kriged_field 
-        Z_crf_nodes -= Z_kriged_nodes_rf
-     
-        #
-        # scale conditioned random field
-        self.conditioned_random_field = self.mean + np.sqrt(self.variance) * Z_crf_nodes
 
         
 

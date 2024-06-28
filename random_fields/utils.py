@@ -95,3 +95,52 @@ def plot2D(coordinates: list, random_field: list, title: str = "Random Field",
     fig.suptitle(title)
     plt.savefig(os.path.join(output_folder, output_name))
     plt.close()
+
+
+def plot1D(coordinates: list, random_field: list, title: str = "Random Field",
+           output_folder = "./", output_name: str = "random_field.png"):
+    """
+    Plot 1D random field
+
+    Parameters
+    ----------
+    coordinates : list
+        List of coordinates of the random field
+    random_field : list
+        List of random field values
+    title : str
+        Title of the plot
+    output_folder : str
+        Output folder
+    output_name : str
+        Output fine name
+    """
+
+    # create output folder
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    # make plot
+    fig, ax = plt.subplots(figsize=(8, 4))
+    ax.set_position([0.1, 0.1, 0.7, 0.8])
+
+    vmin = np.min([np.min(aux) for aux in random_field])
+    vmax = np.max([np.max(aux) for aux in random_field])
+
+    color = 'black'
+    if len(coordinates) > 1:
+        color = 'gray' 
+
+    for i, coord in enumerate(coordinates):
+        x = coord[:, 0]
+        y = np.array(random_field[i]).ravel()
+        ax.plot(x, y, color = color)
+    
+    ax.set_xlabel('x coordinate')
+    ax.set_ylabel('random field value')
+
+    plt.tight_layout()
+
+    fig.suptitle(title)
+    plt.savefig(os.path.join(output_folder, output_name))
+    plt.close()    
