@@ -103,6 +103,10 @@ As a by-product of the conditioned random field generator, the kriging mean and 
 
 Note that only simple kriging is applied for conditioning the random fields. See :ref:`theory` for more details.   
 
+
+
+.. _tutorial2:
+
 Example in 2D
 -------------
 
@@ -239,16 +243,10 @@ In the same way, a 3D conditional random field can be created:
 
 
 
-.. _tutorial2:
-
-Tutorial CPT interpretation
-===========================
-
-TODO
 
 .. _tutorial3:
 
 Tutorial RandomFields in STEM
-=============================
+-----------------------------
 
 TODO
