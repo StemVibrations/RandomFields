@@ -11,35 +11,30 @@ Background information
 The random fields are generated using [gstools](https://geostat-framework.readthedocs.io/en/latest/).
 
 Currently, the following covariance models are available:
-- Gaussian
-- Exponential
-- Matern
-- Linear
 
+* Gaussian
+* Exponential
+* Matern
+* Linear (not for conditioned random fields)
 
-RandomFields Installation
-.................
-To install RandomFields you need to install the following items:
+Additional functoinalities are used to generate conditioned random fields. See :doc:`theory` for details.
 
-* :ref:`python_stem`
 
 Tutorials
 .........
 
 * :ref:`tutorial1`
+    1D unconditioned and conditioned random field generation.
 
 * :ref:`tutorial2`
+    2D and 3D unconditioned and conditioned random field simulation
 
 * :ref:`tutorial3`
-
-Theory
-......
-
-under :ref:`theory`
+    Non-normal Gaussian fields and conditioning based on CPT data
 
 How to contribute
 =================
-If you want contribute to RandomFields please follow the steps defined in :doc:`contributions`.
+If you want to contribute to RandomFields please follow the steps defined in :doc:`contributions`.
 
 
 STEM team
@@ -56,4 +51,4 @@ The :doc:`authors`.
 Package documentation
 =====================
 
-The :doc:`randomfields` documentation.
+The :doc:`random_fields` documentation.

@@ -4,7 +4,7 @@ RandomFields tutorials
 .. _tutorial1:
 
 Example in 1D
------------------------------
+-------------
 This tutorial shows step by step guide on how to set up the random field generator and visualise the resulting random fields.
 
 First the necessary packages are imported and paths are defined.
@@ -103,8 +103,152 @@ As a by-product of the conditioned random field generator, the kriging mean and 
 
 Note that only simple kriging is applied for conditioning the random fields. See :ref:`theory` for more details.   
 
+Example in 2D
+-------------
+
+A (conditioned) 2D random field is constructed as follows:
+
+.. code-block:: python
+
+    import numpy as np
+    from random_fields.generate_field import RandomFields, ModelName
+    from random_fields.utils import plot2D
+
+
+    x = np.linspace(0, 100, 51)
+    y = np.linspace(0, 50, 51)
+    x, y = np.meshgrid(x, y)
+
+    nb_dimensions = 2
+    mean = 10
+    variance = 2
+    vertical_scale_fluctuation = 10
+    anisotropy = [1]
+    angle = [0]
+    model_rf = ModelName.Gaussian
+
+An unconditioned random field is constructed as:
+
+.. code-block:: python
+
+    rf = RandomFields(model_rf, nb_dimensions, mean, variance, vertical_scale_fluctuation, anisotropy, angle, seed=14)
+    rf.generate(np.array([x.ravel(), y.ravel()]).T)
+
+    plot2D([np.array([x.ravel(), y.ravel()]).T], [rf.random_field], title="Random Field", output_folder="./", output_name="random_field_4.png")
+
+
+.. image:: _static/random_field_4.png
+
+Conditioning is consistent with the 1D example:
+
+.. code-block:: python
+
+    xc = np.array([50.]*51)
+    yc = np.linspace(0,50,51)
+
+    vc = np.array([15]*51)
+
+    rf.set_conditioning_points(np.array([xc,yc]).T,vc,noise_level = 0.0001)
+    rf.generate_conditioned(np.array([x.ravel(), y.ravel()]).T)
+
+    plot2D([np.array([x.ravel(), y.ravel()]).T], [rf.conditioned_random_field], 
+                        title="Conditioned Random Field", 
+                        output_folder="./", 
+                        output_name="random_field_5.png")
+
+
+.. image:: _static/random_field_5.png
+
+The kriging mean and variance can be visualised as:
+
+.. code-block:: python
+
+    plot2D([np.array([x.ravel(), y.ravel()]).T], [rf.kriging_mean], 
+                        title="kriging mean", 
+                        output_folder="./", 
+                        output_name="kriging_mean_2D.png")
+
+    plot2D([np.array([x.ravel(), y.ravel()]).T], [rf.kriging_std], 
+                        title="kriging std", 
+                        output_folder="./", 
+                        output_name="kriging_std_2D.png")
+
+.. image:: _static/kriging_mean_2D.png 
+    :width: 49%
+.. image:: _static/kriging_std_2D.png
+    :width: 49%
+
+In the same way, a 3D conditional random field can be created:
+
+
+.. code-block:: python
+
+    # mesh coordinates
+    x = np.linspace(0, 100, 51)
+    y = np.linspace(0, 50, 51)
+    z = np.linspace(0, 25, 51)
+    x, y, z = [i.ravel() for i in np.meshgrid(x, y, z)]
+
+    # random field properties
+    nb_dimensions = 3
+    mean = 10
+    variance = 2
+    vertical_scale_fluctuation = 10
+    anisotropy = [2.5, 2.5]
+    angle = [0, 0]
+    model_rf = ModelName.Gaussian
+
+    # generate and plot random field
+    rf = RandomFields(model_rf, nb_dimensions, mean, variance, vertical_scale_fluctuation, 
+                            anisotropy, angle, seed=14)
+    rf.generate(np.array([x, y, z]).T)
+    plot3D([np.array([x, y, z]).T], [rf.random_field], 
+                            title="Random Field", 
+                            output_folder="./", 
+                            output_name="random_field_3D.png")
+
+    # declae conditioning points
+    xc = np.array([50.]*51)
+    yc = np.linspace(0,50,51)
+    zc = np.array([25]*51)
+    vc = np.array([15]*51)
+    rf.set_conditioning_points(np.array([xc,yc,zc]).T,vc,noise_level = 0.0001)
+
+    # generate and plot conditioned random field model
+    rf.generate_conditioned(np.array([x, y,z]).T)
+    plot3D([np.array([x, y, z]).T], [rf.conditioned_random_field], 
+                            title="Conditioned Random Field", 
+                            output_folder="./", 
+                            output_name="conditioned_random_field_3D.png")
+    plot3D([np.array([x, y, z]).T], [rf.kriging_mean], 
+                            title="Kriging mean 3D", 
+                            output_folder="./", 
+                            output_name="kriging_mean_3D.png")
+    plot3D([np.array([x, y, z]).T], [rf.kriging_std], 
+                            title="Kriging std 3D", 
+                            output_folder="./", 
+                            output_name="kriging_std_3D.png")
+
+
+.. image:: _static/conditioned_random_field_3D.png 
+    :width: 49%
+.. image:: _static/kriging_mean_3D.png 
+    :width: 49%
+.. image:: _static/kriging_std_3D.png
+    :width: 49%
+
+
+
 .. _tutorial2:
 
+Tutorial CPT interpretation
+===========================
 
+TODO
 
 .. _tutorial3:
+
+Tutorial RandomFields in STEM
+=============================
+
+TODO
