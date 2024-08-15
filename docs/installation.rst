@@ -7,4 +7,4 @@ RandomFields Python package
 -------------------
 
 
-To be copied from STEM
+Work in progress
