@@ -1,10 +1,10 @@
 RandomFields installation
 =================
 
-.. _python_stem:
+.. _python_random_fields:
 
 RandomFields Python package
 -------------------
 
 
-Work in progress
+To be copied from STEM

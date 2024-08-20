@@ -48,23 +48,25 @@ An example of a class:
 
 .. code-block::
 
-    class ResidualConvergenceCriteria(ConvergenceCriteriaABC):
+    class ClassName(object):
         """
-        Class containing information about the residual convergence criteria
+        Work in progress: docstring style to be specified 
 
         Inheritance:
-            - :class:`ConvergenceCriteriaABC`
+            -:class:`object`
 
         Attributes:
-            - residual_relative_tolerance (float): The relative tolerance for the residual. Default value is 1e-4.
-            - residual_absolute_tolerance (float): The absolute tolerance for the residual. Default value is 1e-9.
+            - <attribute_name_1> (<attribute type>): <attribute description> 
+            - <attribute_name_2> (<attribute type>): <attribute description> 
+
+
         """
-        def __init__(self):
+        def __init__(self,<args>,...):
             """
-            Constructor of the ResidualConvergenceCriteria class.
+            Constructor of the RandomFields class
             """
-            self.residual_relative_tolerance: float = 1e-4
-            self.residual_absolute_tolerance: float = 1e-9
+            self.attribute_name_1: <attribute_type> = <value>
+            self.attribute_name_2: <attribute_type> = <value>
 
 
 An example of a function:

@@ -86,14 +86,70 @@ def test_distribution_RF_unstruc():
     x = np.array(nodes_fields)[:, 0]
     y = np.array(nodes_fields)[:, 1]
 
-    rf_emsamble = []
+    rf_ensamble = []
     param = []
     for i in range(nb_runs):
         rf = RandomFields(ModelName.Gaussian, 2, 10, 2, 0.05, [1], [1], seed=i)
         rf.generate(np.array([x.ravel(), y.ravel()]).T)
-        rf_emsamble.append(rf.random_field.field)
+        rf_ensamble.append(rf.random_field.field)
         mu_un, std_un = norm.fit(rf.random_field.field)
         param.append([mu_un, std_un])
 
     np.testing.assert_array_almost_equal(np.mean(np.array(param)[:, 0]), 10, decimal=2)
     np.testing.assert_array_almost_equal(np.mean(np.array(param)[:, 1])**2, 2, decimal=2)
+
+
+def test_conditioned_RF_3D_mean_variance():
+    """test the conditioned random field for correct mean and variance"""
+
+    # mesh coordinates
+    x = np.linspace(0, 100, 11)
+    y = np.linspace(0, 50, 11)
+    z = np.linspace(0, 25, 11)
+    x, y, z = [i.ravel() for i in np.meshgrid(x, y, z)]
+
+    # random field properties
+    nb_dimensions = 3
+    mean = 10
+    variance = 2
+    vertical_scale_fluctuation = 10
+    anisotropy = [2.5, 2.5]
+    angle = [0, 0]
+    model_rf = ModelName.Gaussian
+
+    # generate and plot random field
+    rf = RandomFields(model_rf, nb_dimensions, mean, variance, vertical_scale_fluctuation,
+                            anisotropy, angle, seed=14)
+    rf.generate(np.array([x, y, z]).T)
+
+    # declare conditioning points
+    xc = np.array([50.]*5)
+    yc = np.linspace(0,50,5)
+    zc = np.array([25]*5)
+    vc = np.array([15]*5)
+
+    rf.set_conditioning_points(np.array([xc,yc,zc]).T,vc,noise_level = 0.01)
+
+    # generate and plot conditioned random field model
+    rf.generate_conditioned(np.array([x, y,z]).T)
+
+    rf.conditioned_random_field
+    rf.kriging_mean
+    rf.kriging_std
+
+    ## to regenerate new reference solutions
+    # np.savetxt('./data/kriging_mean_3D.txt',rf.kriging_mean)
+    # np.savetxt('./data/kriging_std_3D.txt',rf.kriging_std)
+
+    kriging_mean_ref = np.loadtxt('./tests/data/kriging_mean_3D.txt')
+    kriging_std_ref = np.loadtxt('./tests/data/kriging_std_3D.txt')
+
+    # evaluate and test maximum difference 
+    max_error_mean = np.max(np.abs(kriging_mean_ref - rf.kriging_mean))
+    max_error_std = np.max(np.abs(kriging_std_ref - rf.kriging_std))
+
+    np.testing.assert_array_almost_equal(max_error_mean, 0., decimal=4)
+    np.testing.assert_array_almost_equal(max_error_std, 0., decimal=4)
+
+
+test_conditioned_RF_3D_mean_variance()
