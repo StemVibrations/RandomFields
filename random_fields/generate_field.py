@@ -28,26 +28,25 @@ class RandomFields():
         - None
 
     Attributes:
-        - max_conditioning_points (int):
-        - random_field_model_name (str):
+        - max_conditioning_points (int): maximum number of 
+        - random_field_model_name (str): 
         - random_field_model (int):
-        - n_dim (int):)
-        - seed (int):
-        - mean (float):
-        - variance (float):
-        - vertical_scale_fluctuation (list):
-        - anisotropy (list):
-        - angle (list):
-        - v_dim (int):
-        - random_field (:class:)
-        - z_kriged_field (array)
-        - GaussianProcess (:class:)
-        - conditioning_points (array):
-        - conditioning_values (array):
-        - kriging_mean (array):
-        - kriging_std = (array):
-        - conditioned_random_field (array):
-
+        - n_dim (int): number of physical dimesions (1,2 or 3) 
+        - seed (int): seed for the random number generator
+        - mean (float): unconditioned mean of the random field 
+        - variance (float): unconditioned variance of the random field
+        - vertical_scale_fluctuation (float): 
+        - anisotropy (list): ratio between horizontal scales and vertical scale of fluctuation, shape (`self.n_dims` - 1)
+        - angle (list): rotation angles of the principal directions of the scales of fluctuation relative to the vertical, shape (`self.n_dims` - 1)
+        - v_dim (int): dimesion number corresponding to the vertical scale of fluctuation
+        - random_field (:class:gstools.SRF) random field generator 
+        - z_kriged_field (array): standard-normal kriged random field
+        - gaussian_process (:class:sklearn.gaussian_process.GaussianProcessRegressor)
+        - conditioning_points (array): coordinates of the conditioning points, shape (:,`self.n_dims`)
+        - conditioning_values (array): values of the conditioning points, shape (:,)
+        - kriging_mean (array): mean of the conditioned random field, shape (:,)
+        - kriging_std = (array): standard deviation of the conditioned random field, shape (:,)
+        - conditioned_random_field (array): conditioned random field, shape (:,)
 
     """
 
@@ -114,7 +113,7 @@ class RandomFields():
         self.v_dim = v_dim
         self.random_field = None
         self.z_kriged_field = None
-        self.GaussianProcess = GPR()
+        self.gaussian_process = GPR()
         self.conditioning_points = None
         self.conditioning_values = None
         self.kriging_mean = None
@@ -127,9 +126,10 @@ class RandomFields():
         Generate random field
 
         Args:
-            - nodes (list): The nodes of the random field
+            - nodes (ndarray): The nodes of the random field. shape (:,`self.n_dim`)
         
         Raises:
+            - ValueError: if dimensions of `nodes` do not match dimensions of the model
 
         Returns:
 
@@ -163,27 +163,35 @@ class RandomFields():
         Initiates the conditioning points and inverts the covariance matrix
         
         Args:
-            - points (array): The contitioning point coordinates
-            - values: array-like: The conditioning point values
+            - points (array): The contitioning point coordinates. Dimensions `(:,self.n_dims)`
+            - values: array-like: The conditioning point values.
             - kernel: (:class: sklearn.gaussian_process.kernels.Kernel): The (calibrated) correlation 
-                kernel from sklearn (default = None) 
+                kernel from sklearn (default = None).
             - noise_level (float or array): normalised variance of the observed data, as a single float 
-                or as an array of the same dimensions as `values` (default = 0.0001)
+                or as an array of the same dimensions as `values` (default = 0.0001).
 
         Raises:
+            - Exception: if more than `self.max_conditioning_points` conditioning points are specified, 
+                to prevent excessive computation and memory usage. 
+            - ValueError: if dimensions of `points` do not match dimensions of the model
 
         Returns:
                 
         """
-        self.noise_level = noise_level
 
-        
+        self.noise_level = noise_level
+        self.conditioning_points = points
+        self.conditioning_values = values
 
         # check the maximum number of conditioning points to keep the computation and memory cost reasonable 
         if points.shape[0] > self.max_conditioning_points:
-            raise Exception(f'Too many conditioning points! There are {max(points.shape)} ' + 
+            raise Exception(f'Too many conditioning points! There are {points.shape[0]} ' + 
                             f'points, while the maximum allowed amount is {self.max_conditioning_points}.' +
                             f'\n Consider increasing `max_conditioning_points` or use fewer conditioning points.' )
+
+        # check dimensions of conditioning points agrees with dimensions of model
+        if points.shape[1] != self.n_dim:
+            raise ValueError(f'Dimensions of conditioning points: {points.shape[1]} do not match dimensions of model: {self.n_dim}')
 
 
         # scale of fluctuation
@@ -197,33 +205,33 @@ class RandomFields():
         # correct the length scales between libraries
         if self.random_field_model_name == 'Gaussian':
             ls_sklearn  = scale_fluctuation * 2/np.pi
-            self.KrigingKernel = WhiteKernel(noise_level) + RBF(length_scale = ls_sklearn)    
+            self.kriging_kernel = WhiteKernel(noise_level) + RBF(length_scale = ls_sklearn)    
         elif self.random_field_model_name == 'Exponential':
             ls_sklearn  = scale_fluctuation / np.sqrt(1/2)
-            self.KrigingKernel = WhiteKernel(noise_level) + Matern(length_scale = ls_sklearn, nu = 0.5)    
+            self.kriging_kernel = WhiteKernel(noise_level) + Matern(length_scale = ls_sklearn, nu = 0.5)    
         elif self.random_field_model_name == 'Matern':
             ls_sklearn  = scale_fluctuation / np.sqrt(1/2)
-            self.KrigingKernel = WhiteKernel(noise_level) + Matern(length_scale = ls_sklearn)    
+            self.kriging_kernel = WhiteKernel(noise_level) + Matern(length_scale = ls_sklearn)    
 
         # fit a GP against conditioning points standardised by simulation field statistics: NOT by conditioning point statistics
-        self.GaussianProcess = GPR(kernel = self.KrigingKernel)
-        self.GaussianProcess.optimizer = None
-        self.GaussianProcess.fit(points,(values - self.mean) / np.sqrt(self.variance)  )
-        self.conditioning_points = points
-        self.conditioning_values = values
+        self.gaussian_process = GPR(kernel = self.kriging_kernel)
+        self.gaussian_process.optimizer = None
+        self.gaussian_process.fit(points,(values - self.mean) / np.sqrt(self.variance)  )
         
-        self.kriging_mean = None
-        self.kriging_std = None
-        self.conditioned_random_field = None
+        # reset variables
+        self.kriging_mean = np.array([])
+        self.kriging_std = np.array([])
+        self.conditioned_random_field = np.array([])
 
     def generate_conditioned(self, nodes: npt.NDArray[np.float64]) -> None:
         """
         Generate conditioned random field
 
         Args:
-            nodes (list): The nodes of the random field
+            - nodes (array): The nodes of the random field, shape (:,`self.n_dims`)
         
         Raises:
+            - ValueError: if dimensions of nodes do not match the dimensions of the model
 
         Returns:
             
@@ -234,7 +242,7 @@ class RandomFields():
             raise ValueError(f'Dimensions of nodes: {nodes.shape[1]} do not match dimensions of model: {self.n_dim}')
         #
         # create kriged mean field
-        z_kriged_field,std_kriged_field  = self.GaussianProcess.predict(nodes,return_std = True)
+        z_kriged_field,std_kriged_field  = self.gaussian_process.predict(nodes,return_std = True)
 
         std_kriged_field = np.sqrt(std_kriged_field**2 - self.noise_level)
 
@@ -242,31 +250,29 @@ class RandomFields():
         self.kriging_mean = self.mean + np.sqrt(self.variance) * z_kriged_field
         #
         # create single random field at nodes and conditioning points
-        nodes_cpoints = np.vstack([nodes,self.conditioning_points])
-        self.generate(nodes_cpoints)
+        self.generate(np.vstack([nodes,self.conditioning_points]))
 
         # Split the generated field into the nodal coordinates and the conditioning points
         # Standardize the distribution to marginal ~N(0,1) 
-        z_cond_RF_nodes = (self.random_field.field[:nodes.shape[0]] - self.mean) / np.sqrt(self.variance) 
-        z_RF_cond_points = (self.random_field.field[nodes.shape[0]:] - self.mean) / np.sqrt(self.variance) 
+        z_cond_rf_nodes = (self.random_field.field[:nodes.shape[0]] - self.mean) / np.sqrt(self.variance) 
+        z_rf_cond_points = (self.random_field.field[nodes.shape[0]:] - self.mean) / np.sqrt(self.variance) 
         
         # add the noise to the conditioning points
         np.random.seed(self.seed)
-        z_RF_cond_points += np.sqrt(self.noise_level) * np.random.normal(size = z_RF_cond_points.shape)
+        z_rf_cond_points += np.sqrt(self.noise_level) * np.random.normal(size = z_rf_cond_points.shape)
         
         #
         # create kriged mean field of random field 
-        GP_RF = GPR(kernel = self.GaussianProcess.kernel_)
-        GP_RF.optimizer = None
-        GP_RF.fit(self.conditioning_points,z_RF_cond_points)
-        GP_RF.L_ = self.GaussianProcess.L_
-        z_kriged_nodes_rf = GP_RF.predict(nodes)
+        gp_rf = GPR(kernel = self.gaussian_process.kernel_)
+        gp_rf.optimizer = None
+        gp_rf.fit(self.conditioning_points,z_rf_cond_points)
+        gp_rf.L_ = self.gaussian_process.L_
         #
         # replace kriged mean field (the kriged parts) to create conditioned random field
-        z_cond_RF_nodes -= z_kriged_nodes_rf
-        z_cond_RF_nodes += z_kriged_field 
+        z_cond_rf_nodes -= gp_rf.predict(nodes)
+        z_cond_rf_nodes += z_kriged_field 
      
         #
         # scale conditioned random field
         self.kriging_std = np.sqrt(self.variance) * std_kriged_field
-        self.conditioned_random_field = self.mean + np.sqrt(self.variance) * z_cond_RF_nodes
+        self.conditioned_random_field = self.mean + np.sqrt(self.variance) * z_cond_rf_nodes

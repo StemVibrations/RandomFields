@@ -101,17 +101,12 @@ def plot1D(coordinates: list, random_field: list, title: str = "Random Field",
     Plots and saves 1D random field
 
     Args:
-    ----------
-    coordinates : list
-        List of coordinates of the random field
-    random_field : list
-        List of random field values
-    title : str
-        Title of the plot
-    output_folder : str
-        Output folder
-    output_name : str
-        Output fine name
+        - coordinates (list): List of coordinates of the random field
+        - random_field (list): List of random field values
+        - title (str): Title of the plot
+        - output_folder (str): Output folder
+        - output_name (str): Output fine name
+
     """
 
     # create output folder

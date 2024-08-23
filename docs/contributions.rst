@@ -56,14 +56,17 @@ An example of a class:
             -:class:`object`
 
         Attributes:
-            - <attribute_name_1> (<attribute type>): <attribute description> 
-            - <attribute_name_2> (<attribute type>): <attribute description> 
+            - <attribute_name_1> (<attribute type>): <attribute description>,shape (n,m) 
+            - <attribute_name_2> (<attribute type>): <attribute description>,shape (m,) 
 
 
         """
         def __init__(self,<args>,...):
             """
             Constructor of the RandomFields class
+            
+            Args:
+                - <arg>: (<type>) <description>, shape (n,m,), default
             """
             self.attribute_name_1: <attribute_type> = <value>
             self.attribute_name_2: <attribute_type> = <value>
@@ -73,29 +76,36 @@ An example of a function:
 
 .. code-block::
 
-    def create_solver_settings_dictionary(self, model: Model, mesh_file_name: str, materials_file_name: str) -> Dict[str, Any]:
+    def generate(self, nodes: npt.NDArray[np.float64]) -> None:
         """
-        Creates a dictionary containing the solver settings.
+        Generate random field
 
         Args:
-            - model (:class:`random_fields.model.Model`): The model object containing the solver data and model parts.
-            - mesh_file_name (str): The name of the mesh file.
-            - materials_file_name (str): The name of the materials parameters json file.
-
+            - nodes (ndarray): The nodes of the random field. shape (:,`self.n_dim`)
+        
         Raises:
-            - ValueError: if solver_settings in model are not initialised.
+            - ValueError: if dimensions of `nodes` do not match dimensions of the model
 
         Returns:
-            - Dict[str, Any]: dictionary containing the part of the project parameters
-                dictionary related to problem data and solver settings.
+
         """
 
-        if model.project_parameters is None:
-            raise ValueError("Solver settings are not initialised in model.")
+        # check dimensions of nodes agrees with dimensions of model
+        if nodes.shape[1] != self.n_dim:
+            raise ValueError(f'Dimensions of nodes: {nodes.shape[1]} do not match dimensions of model: {self.n_dim}')
 
-        return self.solver_io.create_settings_dictionary(
-            model.project_parameters,
-            Path(mesh_file_name).stem,
-            materials_file_name,
-            model.get_all_model_parts(),
-        )
+        # scale of fluctuation
+        scale_fluctuation = np.ones(self.n_dim) * self.vertical_scale_fluctuation
+
+        # apply the anisotropy to the other dimensions
+        mask = np.arange(len(scale_fluctuation)) != self.v_dim
+        scale_fluctuation[mask] = scale_fluctuation[mask] * self.anisotropy
+
+        model = self.random_field_model(dim = self.n_dim, 
+                                        var = self.variance, 
+                                        len_scale = scale_fluctuation, 
+                                        angles = self.angle)
+        self.random_field = gs.SRF(model, 
+                                   mean = self.mean, 
+                                   seed = self.seed)
+        self.random_field(nodes.T)

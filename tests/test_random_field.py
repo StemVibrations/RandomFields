@@ -103,9 +103,9 @@ def test_conditioned_RF_3D_mean_variance():
     """test the conditioned random field for correct mean and variance"""
 
     # mesh coordinates
-    x = np.linspace(0, 100, 11)
-    y = np.linspace(0, 50, 11)
-    z = np.linspace(0, 25, 11)
+    x = np.linspace(0, 100, 5)
+    y = np.linspace(0, 50, 5)
+    z = np.linspace(0, 25, 5)
     x, y, z = [i.ravel() for i in np.meshgrid(x, y, z)]
 
     # random field properties
@@ -123,33 +123,25 @@ def test_conditioned_RF_3D_mean_variance():
     rf.generate(np.array([x, y, z]).T)
 
     # declare conditioning points
-    xc = np.array([50.]*5)
-    yc = np.linspace(0,50,5)
-    zc = np.array([25]*5)
-    vc = np.array([15]*5)
+    xc = np.array([50.]*4)
+    yc = np.linspace(0,50,4)
+    zc = np.array([25]*4)
+    vc = np.array([15]*4)
 
     rf.set_conditioning_points(np.array([xc,yc,zc]).T,vc,noise_level = 0.01)
 
-    # generate and plot conditioned random field model
+    # generate conditioned random field model
     rf.generate_conditioned(np.array([x, y,z]).T)
 
-    rf.conditioned_random_field
-    rf.kriging_mean
-    rf.kriging_std
+    # load reference solution
+    data_ref = np.loadtxt('./tests/data/conditioned_rf_3D.txt')
+    kriging_mean_ref = data_ref[0]
+    kriging_std_ref = data_ref[1]
+    kriging_field_ref = data_ref[2]
 
-    ## to regenerate new reference solutions
-    # np.savetxt('./data/kriging_mean_3D.txt',rf.kriging_mean)
-    # np.savetxt('./data/kriging_std_3D.txt',rf.kriging_std)
-
-    kriging_mean_ref = np.loadtxt('./tests/data/kriging_mean_3D.txt')
-    kriging_std_ref = np.loadtxt('./tests/data/kriging_std_3D.txt')
-
-    # evaluate and test maximum difference 
-    max_error_mean = np.max(np.abs(kriging_mean_ref - rf.kriging_mean))
-    max_error_std = np.max(np.abs(kriging_std_ref - rf.kriging_std))
-
-    np.testing.assert_array_almost_equal(max_error_mean, 0., decimal=4)
-    np.testing.assert_array_almost_equal(max_error_std, 0., decimal=4)
+    # test difference in mean, std and single realisation
+    np.testing.assert_array_almost_equal(kriging_mean_ref, rf.kriging_mean, decimal=4)
+    np.testing.assert_array_almost_equal(kriging_std_ref, rf.kriging_std, decimal=4)
+    np.testing.assert_array_almost_equal(kriging_field_ref, rf.conditioned_random_field, decimal=4)
 
 
-test_conditioned_RF_3D_mean_variance()
