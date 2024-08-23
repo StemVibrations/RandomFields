@@ -86,14 +86,62 @@ def test_distribution_RF_unstruc():
     x = np.array(nodes_fields)[:, 0]
     y = np.array(nodes_fields)[:, 1]
 
-    rf_emsamble = []
+    rf_ensamble = []
     param = []
     for i in range(nb_runs):
         rf = RandomFields(ModelName.Gaussian, 2, 10, 2, 0.05, [1], [1], seed=i)
         rf.generate(np.array([x.ravel(), y.ravel()]).T)
-        rf_emsamble.append(rf.random_field.field)
+        rf_ensamble.append(rf.random_field.field)
         mu_un, std_un = norm.fit(rf.random_field.field)
         param.append([mu_un, std_un])
 
     np.testing.assert_array_almost_equal(np.mean(np.array(param)[:, 0]), 10, decimal=2)
     np.testing.assert_array_almost_equal(np.mean(np.array(param)[:, 1])**2, 2, decimal=2)
+
+
+def test_conditioned_RF_3D_mean_variance():
+    """test the conditioned random field for correct mean and variance"""
+
+    # mesh coordinates
+    x = np.linspace(0, 100, 5)
+    y = np.linspace(0, 50, 5)
+    z = np.linspace(0, 25, 5)
+    x, y, z = [i.ravel() for i in np.meshgrid(x, y, z)]
+
+    # random field properties
+    nb_dimensions = 3
+    mean = 10
+    variance = 2
+    vertical_scale_fluctuation = 10
+    anisotropy = [2.5, 2.5]
+    angle = [0, 0]
+    model_rf = ModelName.Gaussian
+
+    # generate and plot random field
+    rf = RandomFields(model_rf, nb_dimensions, mean, variance, vertical_scale_fluctuation,
+                            anisotropy, angle, seed=14)
+    rf.generate(np.array([x, y, z]).T)
+
+    # declare conditioning points
+    xc = np.array([50.]*4)
+    yc = np.linspace(0,50,4)
+    zc = np.array([25]*4)
+    vc = np.array([15]*4)
+
+    rf.set_conditioning_points(np.array([xc,yc,zc]).T,vc,noise_level = 0.01)
+
+    # generate conditioned random field model
+    rf.generate_conditioned(np.array([x, y,z]).T)
+
+    # load reference solution
+    data_ref = np.loadtxt('./tests/data/conditioned_rf_3D.txt')
+    kriging_mean_ref = data_ref[0]
+    kriging_std_ref = data_ref[1]
+    kriging_field_ref = data_ref[2]
+
+    # test difference in mean, std and single realisation
+    np.testing.assert_array_almost_equal(kriging_mean_ref, rf.kriging_mean, decimal=4)
+    np.testing.assert_array_almost_equal(kriging_std_ref, rf.kriging_std, decimal=4)
+    np.testing.assert_array_almost_equal(kriging_field_ref, rf.conditioned_random_field, decimal=4)
+
+
