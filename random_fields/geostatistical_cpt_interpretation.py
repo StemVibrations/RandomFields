@@ -21,17 +21,13 @@ from geolib_plus.robertson_cpt_interpretation import OCRMethod
 from geolib_plus.robertson_cpt_interpretation import ShearWaveVelocityMethod
 
 class MarginalTransformation():
-    """lass for back-and-forth transformation between marginal an standard-normal distributions
-
-    Returns:
-        _type_: _description_
-    """    
-
+    """Class for the transformation model between the distributions of the pysical values and the standard-normal distribution  
+    """
     def __init__(self,
                  data: npt.NDArray[np.float64],
-                 min: float = None,
-                 max: float = None,
-                 lognormal: bool = False):
+                 min: Optional[float] = None,
+                 max: Optional[float] = None,
+                 lognormal: Optional[bool] = False):
         """
         Initiate class
 
@@ -68,7 +64,6 @@ class MarginalTransformation():
         self._z = np.linspace(-8,8,101)
         self._data = np.interp(self._z,z_points,x_points)
         self._log_data = np.interp(self._z,z_points,x_points_ln)
-
 
     def plot(self,
              title: str = "Marginal distribution transformation ",
@@ -109,7 +104,6 @@ class MarginalTransformation():
             z = np.interp(x,self._data,self._z)
         return z
 
-
     def ZtoX(self,Z):
         """ZtoX transforms from a standard-normal values `z` to the corresponding values in `x`.
 
@@ -124,7 +118,6 @@ class MarginalTransformation():
         else:
             x = np.interp(Z,self._z,self._data)
         return x
-    
 
 class CPT_data():
     """CPT_data _summary_
@@ -223,14 +216,14 @@ class CPT_data():
     def data_coordinate_change(self,
                                x_ref:float = 0.,
                                y_ref:float = 0.,
-                               theta_ref:float = 0.,
+                               orientation_x_axis:float = 0.,
                                based_on_midpoint = False):
         """data_coordinate_change Coordinate system transformation, relative to a reference point (x_ref,y_ref)
 
         Args:
             - x_ref (float, optional): _description_. Defaults to 0..
             - y_ref (float, optional): _description_. Defaults to 0..
-            - theta_ref (float, optional): orienation of the model in degrees, clock-wise from North: r_ref = 0 results 
+            - orientation_x_axis (float, optional): orienation of the model in degrees, clock-wise from North: r_ref = 0 results 
                     in a 90 degrees clock-wise rotation in the x-y plane . Defaults to 0..
             - based_on_midpoint (bool, optional): If True, translates the domain relative to the midpoint of the CPT locations 
                     `self.cpt_locations`. Defaults to False.
@@ -248,7 +241,7 @@ class CPT_data():
         self.cpt_locations[:,1] -= y_ref
 
         # rotate counterclock-wise back to N000  minus 90 degrees:
-        theta_rad = theta_ref/180*np.pi  - np.pi/2
+        theta_rad = orientation_x_axis/180*np.pi  - np.pi/2
         rotation = np.array([[np.cos(theta_rad), 0, -np.sin(theta_rad)],
                              [0., 1., 0.],
                              [np.sin(theta_rad), 0, np.cos(theta_rad)]])
@@ -314,14 +307,19 @@ class GeostatisticalModel():
         # if kernel does not exist, create a default
         if not kernel:
             length_scale = [100.]*nb_dimensions
+            length_scale_bounds = [[1.0,1000.],[1.0,1000.],[1.0,1000.]]
             length_scale[v_dim] = 1.
-            kernel = WhiteKernel(0.01) + RBF(length_scale=length_scale)  
+            length_scale_bounds[v_dim] = [0.01,10.]
+            
+
+            kernel = WhiteKernel(0.01) + RBF(length_scale=length_scale,
+                                             length_scale_bounds = length_scale_bounds)  
 
         self.gpr = GPR(kernel = kernel)
 
 
     def calibrate(self,coords: npt.NDArray[np.float64],values: npt.NDArray[np.float64]):
-        """calibrates the 
+        """calibrates the geosatistical model
 
         Args:
             coords (npt.NDArray[np.float64]): data spatial coordinates
@@ -376,21 +374,21 @@ class ElasticityFieldsFromCpt():
                  cpt_file_folder:str = './',
                  x_ref:float = 0.,
                  y_ref:float = 0.,
-                 theta_ref:float = 0.,
+                 orientation_x_axis:float = 0.,
                  based_on_midpoint:bool = False,
                  max_conditioning_points:int = 2000):
                                  
         self.cpt_file_folder = cpt_file_folder
         self.x_ref = x_ref
         self.y_ref = y_ref
-        self.theta_ref = theta_ref
+        self.orientation_x_axis = orientation_x_axis
         self.based_on_midpoint = based_on_midpoint
         self.max_conditioning_points = max_conditioning_points
 
         self.conditioning_data = CPT_data(cpt_directory = self.cpt_file_folder)
         self.conditioning_data.read_cpt_data()
         self.conditioning_data.interpret_cpt_data()
-        self.conditioning_data.data_coordinate_change(theta_ref = self.theta_ref,based_on_midpoint = self.based_on_midpoint)
+        self.conditioning_data.data_coordinate_change(orientation_x_axis = self.orientation_x_axis,based_on_midpoint = self.based_on_midpoint)
 
         self.thinning_sample_index = np.random.choice(self.conditioning_data.data_coords.shape[0],size = self.max_conditioning_points,replace = False)
 
@@ -414,23 +412,22 @@ class ElasticityFieldsFromCpt():
         length_scale_prior = [100.]*ndim_calibrate
         length_scale_prior[v_dim] = 1.
 
-        kernel = WhiteKernel(0.01) + RBF(length_scale=length_scale_prior)
+        #kernel = WhiteKernel(0.01) + RBF(length_scale=length_scale_prior)
 
         self.coord_calibration = np.zeros([self.max_conditioning_points,3])
         for i in calibration_indices:
             self.coord_calibration[:,i] = self.conditioning_data.data_coords[self.thinning_sample_index,i]
 
 
-        self.geostat_model = GeostatisticalModel(nb_dimensions = ndim_calibrate, v_dim = v_dim,kernel = kernel)
+        self.geostat_model = GeostatisticalModel(nb_dimensions = ndim_calibrate, v_dim = v_dim)
         self.geostat_model.calibrate(self.coord_calibration[:,calibration_indices],self.trans_model_vs.XtoZ(self.conditioning_data.vs[self.thinning_sample_index]))
-
 
         self.rf_vs = RandomFields(model_name = ModelName.Gaussian, 
                             n_dim = 3, 
                             mean = 0, 
                             variance = 1,
                             v_scale_fluctuation = self.geostat_model.vertical_scale_fluctuation, 
-                            anisotropy = self.geostat_model.anisotropy*2, 
+                            anisotropy = (self.geostat_model.anisotropy*2)[:2], 
                             angle = [0]*2, 
                             seed = seed,
                             max_conditioning_points=self.max_conditioning_points)
@@ -442,7 +439,7 @@ class ElasticityFieldsFromCpt():
                             mean = 0, 
                             variance = 1,
                             v_scale_fluctuation = self.geostat_model.vertical_scale_fluctuation, 
-                            anisotropy = self.geostat_model.anisotropy*2, 
+                            anisotropy = (self.geostat_model.anisotropy*2)[:2], 
                             angle = [0]*2, 
                             seed = seed+1,
                             max_conditioning_points=self.max_conditioning_points)
@@ -466,18 +463,19 @@ class ElasticityFieldsFromCpt():
 
 if __name__ == '__main__':
 
-    folder = r'C:\_projects\2024\STEM\cpt_interpretation'
+    folder = r'C:\Users\eijnden\OneDrive - Stichting Deltares\Desktop\DS_cpt\100'
 
-    x = np.linspace(-210, 210, 101)
-    y = np.linspace(-25, -5, 21)
-    z = np.linspace(-25, 25, 21)
+    x = np.linspace( -50, 50, 41)
+    y = np.linspace(-10, -0, 41)
+    z = np.linspace(-20, 20, 41)
     x, y, z = np.meshgrid(x, y, z)
     xy_mesh = np.array([x.ravel(), y.ravel(), z.ravel()]).T
 
     efc = ElasticityFieldsFromCpt(cpt_file_folder = folder,
                                   based_on_midpoint = True,
-                                  max_conditioning_points = 1000)
-    efc.calibrate_geostat_model(calibration_indices=(0,1))
+                                  max_conditioning_points = 1000,
+                                  orientation_x_axis = 162)
+    efc.calibrate_geostat_model(calibration_indices=(0,1,2))
     
     print(efc.geostat_model.gpr.kernel_)
 
@@ -491,10 +489,14 @@ if __name__ == '__main__':
     y = xy_mesh[:,2]
     z = xy_mesh[:,1]
     xd = efc.conditioning_data.data_coords[:,0]
-    yd = 0*efc.conditioning_data.data_coords[:,2]
+    yd = efc.conditioning_data.data_coords[:,2]
     zd = efc.conditioning_data.data_coords[:,1]
-    ax.scatter(xd, yd, zd,c=efc.conditioning_data.rho)
+    #%%
+
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
     ax.scatter(x, y, z,c=efc.rho, edgecolors=None, marker="s")
+    ax.scatter(xd, yd, zd,c=efc.conditioning_data.rho)
     ax.set_xlabel('x')    
     ax.set_ylabel('y')    
     ax.set_zlabel('z')
