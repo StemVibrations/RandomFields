@@ -506,7 +506,7 @@ class ElasticityFieldsFromCpt():
 
 
     def generate(self,coordinates):
-        """generate _summary_
+        """generate random fields
 
         Args:
             coordinates (numpy.typing.NDArray[np.float64]): 3D coordinated of points to generate random field values for
@@ -522,7 +522,7 @@ class ElasticityFieldsFromCpt():
 
 if __name__ == '__main__':
 
-    folder = r'...'
+    folder = r'.'
 
     x = np.linspace( -50, 50, 41)
     y = np.linspace(-10, -0, 41)
