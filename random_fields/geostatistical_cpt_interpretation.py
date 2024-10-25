@@ -6,7 +6,6 @@ import os
 import numpy as np
 import numpy.typing as npt
 import matplotlib.pyplot as plt
-from geolib_plus.gef_cpt import GefCpt
 import scipy.stats as st
 
 from generate_field import RandomFields, ModelName
@@ -19,6 +18,7 @@ from geolib_plus.robertson_cpt_interpretation import RobertsonCptInterpretation
 from geolib_plus.robertson_cpt_interpretation import UnitWeightMethod
 from geolib_plus.robertson_cpt_interpretation import OCRMethod
 from geolib_plus.robertson_cpt_interpretation import ShearWaveVelocityMethod
+
 
 class MarginalTransformation():
     """Class for the transformation model between the distributions of the pysical values and the standard-normal distribution  
@@ -211,6 +211,63 @@ class CPT_data():
             self.vs = np.hstack([self.vs,cpt.vs])
 
         self.g_0 = self.rho/self.gravity*self.vs**2
+
+        self.save_conditioning_points_to_vtk(variable_names = ['vs','rho'])
+
+    def save_conditioning_points_to_vtk(self,
+                filename = 'conditioning_data.vtk',
+                variable_names ):
+        """Saves the conditioning data to a .vtk file for visualisation.
+
+        Args:
+            - filename (str, optional): . Defaults to 'conditioning_data.vtk'.
+            - variable_names (list[str]): list lf variables to save. variables should be attributes.
+
+        Raises:
+            ValueError: if type and dimensions of `coordinates` not correct 
+            ValueError: if variables in `variable_names` are not an attribute
+            ValueError: if variable dimensions are not correct. 
+        """
+        coordinates = self.data_coords
+
+        if not isinstance(coordinates, np.ndarray) or coordinates.shape[1] != 3:
+            raise ValueError("Coordinates should be a numpy array with shape (N, 3).")
+
+        n_points = len(coordinates) 
+        n_values = len(variable_names)
+
+        scalars = []
+        for varname in variable_names:
+            if hasattr(self,varname):
+                scalar = self.__getattribute__(varname)
+                if len(scalar) == n_points and isinstance(scalar,np.ndarray):
+                    scalars.append(scalar)
+                else:
+                    raise ValueError(f"`{varname}` should be a numpy array of length {n_points}.")
+            else:
+                raise ValueError(f"{varname} is not an instance of `conditioning_data`")
+       
+        if not isinstance(scalars, list) or len(scalars) != len(variable_names) or len(scalars[0]) != coordinates.shape[0]:
+            raise ValueError("Scalars should be a numpy array with shape (N, 3), matching the number of coordinates.")
+
+        with open(filename,'w') as file:
+            file.write('# vtk DataFile Version 5.1\n')
+            file.write('vtk output\n')
+            file.write('ASCII\n')
+            file.write('DATASET POLYDATA\n')
+            file.write(f'POINTS {n_points} float\n')
+            for point in coordinates:
+                file.write('%10.2f %10.2f %10.2f\n'%(point[0],point[1],point[2]))
+            file.write(f'POINT_DATA {n_points}\n')
+            file.write(f'FIELD FieldData {n_values}\n')
+
+            for z,name in zip(scalars,variable_names):
+                file.write(f'{name} 1 {n_points} float\n')
+                for x in z:
+                    file.write('%.g '%(x))
+                file.write('\n')
+
+        print(f"File saved as {filename}")
 
 
     def data_coordinate_change(self,
@@ -461,9 +518,11 @@ class ElasticityFieldsFromCpt():
         self.rho = self.trans_model_rho.ZtoX(self.rf_rho.conditioned_random_field)
         self.g0 = self.rho * self.vs**2
 
+
+
 if __name__ == '__main__':
 
-    folder = r'C:\Users\eijnden\OneDrive - Stichting Deltares\Desktop\DS_cpt\100'
+    folder = r'...'
 
     x = np.linspace( -50, 50, 41)
     y = np.linspace(-10, -0, 41)
