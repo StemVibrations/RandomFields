@@ -19,6 +19,10 @@ from geolib_plus.robertson_cpt_interpretation import UnitWeightMethod
 from geolib_plus.robertson_cpt_interpretation import OCRMethod
 from geolib_plus.robertson_cpt_interpretation import ShearWaveVelocityMethod
 
+import logging
+
+
+
 
 class MarginalTransformation():
     """Class for the transformation model between the distributions of the pysical values and the standard-normal distribution  
@@ -155,6 +159,9 @@ class CPT_data():
             self.cpt_list = []
             self.cpt_filepaths = []
 
+        # temporarily diable warning logging
+        initial_logging_level = logging.getLogger().getEffectiveLevel()
+        logging.disable(logging.ERROR)
 
         for gef_name in os.listdir(self.cpt_directory):
             if gef_name.endswith('.gef'): 
@@ -180,6 +187,8 @@ class CPT_data():
                 except:
                     raise Warning('Ignoring file {gef_name}. xml-files for CPT data may not be supported by geolib_plus?') 
 
+        # set logging level back to initial level
+        logging.disable(initial_logging_level)
 
 
     def interpret_cpt_data(self,interpreter = None,v_dim = 1):# = RobertsonCptInterpretation):
@@ -366,8 +375,8 @@ class GeostatisticalModel():
         # if kernel does not exist, create a default
         if not kernel:
             length_scale = [100.]*nb_dimensions
-            length_scale_bounds = [[1.0,1000.],[1.0,1000.],[1.0,1000.]]
-            length_scale[v_dim] = 1.
+            length_scale_bounds = [[1.0,1000.]]*nb_dimensions
+            length_scale[v_dim] = self.v_dim
             length_scale_bounds[v_dim] = [0.01,10.]
             
 
