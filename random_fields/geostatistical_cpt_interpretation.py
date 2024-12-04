@@ -210,18 +210,17 @@ class CPT_data():
             self.rho = np.hstack([self.rho,cpt.rho])
             self.vs = np.hstack([self.vs,cpt.vs])
 
-        self.g_0 = self.rho/self.gravity*self.vs**2
-
-        self.save_conditioning_points_to_vtk(variable_names = ['vs','rho'])
+        self.g0 = self.rho*self.vs**2
+        self.young_modulus = 2.*self.g0*(1.+0.2)
 
     def save_conditioning_points_to_vtk(self,
                 filename = 'conditioning_data.vtk',
-                variable_names ):
+                variable_names = ['vs'] ):
         """Saves the conditioning data to a .vtk file for visualisation.
 
         Args:
             - filename (str, optional): . Defaults to 'conditioning_data.vtk'.
-            - variable_names (list[str]): list lf variables to save. variables should be attributes.
+            - variable_names (list[str]): list of variables to save. variables should be attributes.
 
         Raises:
             ValueError: if type and dimensions of `coordinates` not correct 
@@ -245,7 +244,7 @@ class CPT_data():
                 else:
                     raise ValueError(f"`{varname}` should be a numpy array of length {n_points}.")
             else:
-                raise ValueError(f"{varname} is not an instance of `conditioning_data`")
+                raise ValueError(f"{varname} is not an attribute of `conditioning_data`")
        
         if not isinstance(scalars, list) or len(scalars) != len(variable_names) or len(scalars[0]) != coordinates.shape[0]:
             raise ValueError("Scalars should be a numpy array with shape (N, 3), matching the number of coordinates.")
@@ -264,7 +263,7 @@ class CPT_data():
             for z,name in zip(scalars,variable_names):
                 file.write(f'{name} 1 {n_points} float\n')
                 for x in z:
-                    file.write('%.g '%(x))
+                    file.write('%.3g '%(x))
                 file.write('\n')
 
         print(f"File saved as {filename}")
@@ -305,6 +304,9 @@ class CPT_data():
         
         self.data_coords = self.data_coords @ rotation.T
         self.cpt_locations =  self.cpt_locations @ rotation[::2,::2].T
+
+        self.save_conditioning_points_to_vtk(variable_names = ['vs','rho','young_modulus'])
+
 
     def plot_coordinates(self,original_coordinates = False):
         """plot_coordinates Plots the coordinates of the CPTs
@@ -435,6 +437,7 @@ class ElasticityFieldsFromCpt():
                  based_on_midpoint:bool = False,
                  max_conditioning_points:int = 2000):
                                  
+        self.poisson_ratio = 0.2
         self.cpt_file_folder = cpt_file_folder
         self.x_ref = x_ref
         self.y_ref = y_ref
@@ -517,8 +520,11 @@ class ElasticityFieldsFromCpt():
         self.vs = self.trans_model_vs.ZtoX(self.rf_vs.conditioned_random_field)
         self.rho = self.trans_model_rho.ZtoX(self.rf_rho.conditioned_random_field)
         self.g0 = self.rho * self.vs**2
+        self.young_modulus = 2*self.g0*(1. + self.poisson_ratio)
 
-
+        #
+        # only the Young modulus is communicated back as the generated field...
+        self.generated_field = list(self.young_modulus)
 
 if __name__ == '__main__':
 
@@ -538,7 +544,7 @@ if __name__ == '__main__':
     
     print(efc.geostat_model.gpr.kernel_)
 
-    %matplotlib qt
+    #%matplotlib qt
 
     efc.generate(xy_mesh)
 
