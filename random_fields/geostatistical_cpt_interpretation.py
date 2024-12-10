@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import scipy.stats as st
 import logging
 
-from generate_field import RandomFields, ModelName
+from random_fields.generate_field import RandomFields, ModelName
 
 from sklearn.gaussian_process import GaussianProcessRegressor as GPR
 from sklearn.gaussian_process.kernels import RBF, WhiteKernel, Sum
