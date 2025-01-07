@@ -55,7 +55,7 @@ html_show_sourcelink = False
 # Link to the github
 html_context = {
     "display_github": True,
-    "github_user": "stemVibrations",
+    "github_user": "StemVibrations",
     "github_repo": "RanndomFields",
     "github_version": "main",
     "conf_py_path": "/docs/",
