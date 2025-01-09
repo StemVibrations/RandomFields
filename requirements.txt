@@ -3,4 +3,4 @@ matplotlib==3.9.3
 scipy==1.15.0
 gstools==1.6.0
 scikit-learn==1.6.0
-CPTtool==2.2.1
+CPTtool==2.2.2
