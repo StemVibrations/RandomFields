@@ -7,3 +7,4 @@ build/*
 random_fields.egg-info/*
 .coverage
 .tox/*
+docs/build/*

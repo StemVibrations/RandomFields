@@ -8,7 +8,7 @@ User guide
 
 Background information
 ......................
-The random fields are generated using [gstools](https://geostat-framework.readthedocs.io/en/latest/).
+The random fields are generated using `gstools <https://geostat-framework.readthedocs.io/en/latest/>`_.
 
 Currently, the following covariance models are available:
 
@@ -17,7 +17,7 @@ Currently, the following covariance models are available:
 * Matern
 * Linear (not for conditioned random fields)
 
-Additional functoinalities are used to generate conditioned random fields. See :doc:`theory` for details.
+Additional functoinalities are used to generate conditioned random fields.
 
 
 Tutorials
@@ -27,10 +27,14 @@ Tutorials
     1D unconditioned and conditioned random field generation.
 
 * :ref:`tutorial2`
-    2D and 3D unconditioned and conditioned random field simulation
+    2D unconditioned and conditioned random field simulation.
 
 * :ref:`tutorial3`
-    Non-normal Gaussian fields and conditioning based on CPT data
+    3D unconditioned and conditioned random field simulation.
+
+* :ref:`tutorial4`
+    Non-normal Gaussian fields and conditioning based on CPT data.
+
 
 How to contribute
 =================
@@ -47,6 +51,7 @@ STEM is a research programme that results from a collaboration between the follo
 * `TU Delft <https://www.tudelft.nl>`_
 
 The :doc:`authors`.
+
 
 Package documentation
 =====================

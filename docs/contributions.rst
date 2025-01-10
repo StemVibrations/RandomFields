@@ -12,7 +12,7 @@ When contributing code follow this checklist:
     #. Make changes and commit your changes using a descriptive commit message.
     #. Provide tests for your changes, and ensure they all pass.
     #. Provide documentation for your changes, in accordance with the style of the rest of the project (see :ref:`style_guide`).
-    #. Create a pull request to STEM main branch. The STEM team will review and discuss your Pull Request with you.
+    #. Create a pull request to RandomFields main branch. The STEM team will review and discuss your Pull Request with you.
 
 For any questions, please get in contact with one of the members of :doc:`authors`.
 
@@ -21,7 +21,7 @@ For any questions, please get in contact with one of the members of :doc:`author
 
 Code style guide
 ----------------
-The additional features should follow the style of the STEM project.
+The additional features should follow the style of the RandomFields project.
 
 We follow the PEP 8 style guide for Python code, with our custom modifications as defined in the
 `Yapf file <../../.style.yapf>`_ and the `flake8 file <../../.flake8>`_. These files can be ran manually by using the
@@ -50,21 +50,21 @@ An example of a class:
 
     class ClassName(object):
         """
-        Work in progress: docstring style to be specified 
+        Work in progress: docstring style to be specified
 
         Inheritance:
             -:class:`object`
 
         Attributes:
-            - <attribute_name_1> (<attribute type>): <attribute description>,shape (n,m) 
-            - <attribute_name_2> (<attribute type>): <attribute description>,shape (m,) 
+            - <attribute_name_1> (<attribute type>): <attribute description>,shape (n,m)
+            - <attribute_name_2> (<attribute type>): <attribute description>,shape (m,)
 
 
         """
         def __init__(self,<args>,...):
             """
             Constructor of the RandomFields class
-            
+
             Args:
                 - <arg>: (<type>) <description>, shape (n,m,), default
             """
@@ -82,7 +82,7 @@ An example of a function:
 
         Args:
             - nodes (ndarray): The nodes of the random field. shape (:,`self.n_dim`)
-        
+
         Raises:
             - ValueError: if dimensions of `nodes` do not match dimensions of the model
 
@@ -101,11 +101,11 @@ An example of a function:
         mask = np.arange(len(scale_fluctuation)) != self.v_dim
         scale_fluctuation[mask] = scale_fluctuation[mask] * self.anisotropy
 
-        model = self.random_field_model(dim = self.n_dim, 
-                                        var = self.variance, 
-                                        len_scale = scale_fluctuation, 
+        model = self.random_field_model(dim = self.n_dim,
+                                        var = self.variance,
+                                        len_scale = scale_fluctuation,
                                         angles = self.angle)
-        self.random_field = gs.SRF(model, 
-                                   mean = self.mean, 
+        self.random_field = gs.SRF(model,
+                                   mean = self.mean,
                                    seed = self.seed)
         self.random_field(nodes.T)

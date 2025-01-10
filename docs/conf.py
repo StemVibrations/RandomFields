@@ -8,12 +8,10 @@
 
 import random_fields
 
-
 project = 'RandomFields'
 copyright = '2024, STEM team'
 author = 'STEM team'
 version = random_fields.__version__
-
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
