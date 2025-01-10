@@ -24,7 +24,10 @@ def test_distribution_RF_struc(cleanup_generated_files):
     rf = RandomFields(ModelName.Gaussian, 2, 10, 2, 1, [1], [1], seed=14)
     rf.generate(np.array([x.ravel(), y.ravel()]).T)
 
-    plot2D([np.array([x.ravel(), y.ravel()]).T], [rf.random_field], title="Random Field", output_folder="./", output_name="random_field.eps")
+    plot2D([np.array([x.ravel(), y.ravel()]).T], [rf.random_field],
+           title="Random Field",
+           output_folder="./",
+           output_name="random_field.eps")
 
     with open("./tests/data/random_field.eps", "r") as fi:
         data_org = fi.read().splitlines()
@@ -36,6 +39,7 @@ def test_distribution_RF_struc(cleanup_generated_files):
     idx_end = data_org.index("currentfile DataString readhexstring pop")
     data = [val == data_new[header + i] for i, val in enumerate(data_org[header:idx_end])]
     assert all(data)
+
 
 @pytest.mark.skip(reason="3D plot not working on GitHub Actions")
 def test_distribution_RF_struc_3D(cleanup_generated_files):
@@ -50,7 +54,10 @@ def test_distribution_RF_struc_3D(cleanup_generated_files):
     rf = RandomFields(ModelName.Gaussian, 3, 10, 2, 1, [1, 0.5], [1, 1], seed=14)
     rf.generate(np.array([x.ravel(), y.ravel(), z.ravel()]).T)
 
-    plot3D([np.array([x.ravel(), y.ravel(), z.ravel()]).T], [rf.random_field], title="Random Field", output_folder="./", output_name="random_field.eps")
+    plot3D([np.array([x.ravel(), y.ravel(), z.ravel()]).T], [rf.random_field],
+           title="Random Field",
+           output_folder="./",
+           output_name="random_field.eps")
 
     with open("./tests/data/random_field_3D.eps", "r") as fi:
         data_org = fi.read().splitlines()

@@ -19,10 +19,12 @@ def test_model_names():
     rf = RandomFields(ModelName.Linear, 2, 2, 2, 2, [2], [2])
     assert rf.random_field_model.__name__ == 'Linear'
 
+
 def test_failure_ndim():
     "test failure with number of dimensions"
     with pytest.raises(ValueError):
         RandomFields(ModelName.Gaussian, 4, 2, 2, 2, [2], [2])
+
 
 def test_model_name_failure():
     """test failure with wrong model name"""
@@ -118,20 +120,19 @@ def test_conditioned_RF_3D_mean_variance():
     model_rf = ModelName.Gaussian
 
     # generate and plot random field
-    rf = RandomFields(model_rf, nb_dimensions, mean, variance, vertical_scale_fluctuation,
-                            anisotropy, angle, seed=14)
+    rf = RandomFields(model_rf, nb_dimensions, mean, variance, vertical_scale_fluctuation, anisotropy, angle, seed=14)
     rf.generate(np.array([x, y, z]).T)
 
     # declare conditioning points
-    xc = np.array([50.]*4)
-    yc = np.linspace(0,50,4)
-    zc = np.array([25]*4)
-    vc = np.array([15]*4)
+    xc = np.array([50.] * 4)
+    yc = np.linspace(0, 50, 4)
+    zc = np.array([25] * 4)
+    vc = np.array([15] * 4)
 
-    rf.set_conditioning_points(np.array([xc,yc,zc]).T,vc,noise_level = 0.01)
+    rf.set_conditioning_points(np.array([xc, yc, zc]).T, vc, noise_level=0.01)
 
     # generate conditioned random field model
-    rf.generate_conditioned(np.array([x, y,z]).T)
+    rf.generate_conditioned(np.array([x, y, z]).T)
 
     # load reference solution
     data_ref = np.loadtxt('./tests/data/conditioned_rf_3D.txt')
@@ -143,5 +144,3 @@ def test_conditioned_RF_3D_mean_variance():
     np.testing.assert_array_almost_equal(kriging_mean_ref, rf.kriging_mean, decimal=4)
     np.testing.assert_array_almost_equal(kriging_std_ref, rf.kriging_std, decimal=4)
     np.testing.assert_array_almost_equal(kriging_field_ref, rf.conditioned_random_field, decimal=4)
-
-
