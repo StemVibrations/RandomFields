@@ -95,6 +95,7 @@ class RandomFields():
         self.random_field_model = model_name.value
         self.n_dim = n_dim
         self.seed = seed
+        np.random.seed(seed)
         self.mean = mean
         self.variance = variance
         self.vertical_scale_fluctuation = v_scale_fluctuation
@@ -204,11 +205,6 @@ class RandomFields():
         self.gaussian_process = GPR(kernel=self.kriging_kernel)
         self.gaussian_process.optimizer = None
         self.gaussian_process.fit(points, (values - self.mean) / np.sqrt(self.variance))
-
-        # # reset variables
-        # self.kriging_mean = np.array([])
-        # self.kriging_std = np.array([])
-        # self.conditioned_random_field = np.array([])
 
     def generate_conditioned(self, nodes: npt.NDArray[np.float64]) -> None:
         """
