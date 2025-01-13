@@ -11,11 +11,8 @@ from random_fields.generate_field import RandomFields, ModelName
 SHOW_RESULTS = False
 
 
-
-@pytest.mark.parametrize("cpt_folder_path, test_file", [
-    ("./tests/cpts/gef", "./tests/data/2d_rf_gef.pickle"),
-    ("./tests/cpts/xml", "./tests/data/2d_rf_xml.pickle")
-])
+@pytest.mark.parametrize("cpt_folder_path, test_file", [("./tests/cpts/gef", "./tests/data/2d_rf_gef.pickle"),
+                                                        ("./tests/cpts/xml", "./tests/data/2d_rf_xml.pickle")])
 def test_2d_random_field(cpt_folder_path, test_file):
     """
     Test the generation of a conditional 2D random field with GEF & XML files.
@@ -49,21 +46,21 @@ def test_2d_random_field(cpt_folder_path, test_file):
     geo_model.calibrate(coords=coords[:, [2, 1]], values=z_data)
 
     random_field_generator = RandomFields(model_name=ModelName.Gaussian,
-                                        n_dim=2,
-                                        mean=0,
-                                        variance=1,
-                                        v_scale_fluctuation=geo_model.vertical_scale_fluctuation,
-                                        anisotropy=geo_model.anisotropy,
-                                        angle=[0],
-                                        seed=14)
+                                          n_dim=2,
+                                          mean=0,
+                                          variance=1,
+                                          v_scale_fluctuation=geo_model.vertical_scale_fluctuation,
+                                          anisotropy=geo_model.anisotropy,
+                                          angle=[0],
+                                          seed=14)
 
     I = np.random.choice(len(cpt_data.vs), size=500, replace=False)
 
     coords = cpt_data.data_coords[I]
     values = cpt_data.vs[I]
     random_field_generator.set_conditioning_points(points=coords[:, [2, 1]],
-                                                values=marginal_transformator.x_to_z(x=values),
-                                                noise_level=geo_model.noise_level)
+                                                   values=marginal_transformator.x_to_z(x=values),
+                                                   noise_level=geo_model.noise_level)
 
     # create grit of points on the domnain (-220,220) by (-24,-1) to generate a field for.
     x = np.linspace(-220, 220, 250)

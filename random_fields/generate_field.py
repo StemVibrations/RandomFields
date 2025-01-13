@@ -143,7 +143,7 @@ class RandomFields:
     def set_conditioning_points(self,
                                 points: npt.NDArray[np.float64],
                                 values: npt.NDArray[np.float64],
-                                noise_level: Union[float, npt.NDArray[np.float64]]=0.0001) -> None:
+                                noise_level: Union[float, npt.NDArray[np.float64]] = 0.0001) -> None:
         """
         Initiates the conditioning points and inverts the covariance matrix
 
@@ -167,12 +167,10 @@ class RandomFields:
 
         # check the maximum number of conditioning points to keep the computation and memory cost reasonable
         if points.shape[0] > self.max_conditioning_points:
-            raise Exception(
-                f'Too many conditioning points!\n'
-                'There are {points.shape[0]} points, while the maximum allowed amount'
-                f'is {self.max_conditioning_points}.\n'
-                'Consider increasing `max_conditioning_points` or use fewer conditioning points.'
-            )
+            raise Exception(f'Too many conditioning points!\n'
+                            'There are {points.shape[0]} points, while the maximum allowed amount'
+                            f'is {self.max_conditioning_points}.\n'
+                            'Consider increasing `max_conditioning_points` or use fewer conditioning points.')
 
         # check dimensions of conditioning points agrees with dimensions of model
         if points.shape[1] != self.n_dim:
@@ -231,8 +229,10 @@ class RandomFields:
 
         # Split the generated field into the nodal coordinates and the conditioning points
         # Standardize the distribution to marginal ~N(0,1)
-        z_cond_rf_nodes = (self.random_field.field[:nodes.shape[0]] - self.mean) / np.sqrt(self.variance)  # type: ignore
-        z_rf_cond_points = (self.random_field.field[nodes.shape[0]:] - self.mean) / np.sqrt(self.variance)  # type: ignore
+        z_cond_rf_nodes = (self.random_field.field[:nodes.shape[0]] - self.mean) / np.sqrt(  # type: ignore
+            self.variance)  # type: ignore
+        z_rf_cond_points = (self.random_field.field[nodes.shape[0]:] - self.mean) / np.sqrt(  # type: ignore
+            self.variance)  # type: ignore
 
         # add the noise to the conditioning points
         z_rf_cond_points += np.sqrt(self.noise_level) * np.random.normal(size=z_rf_cond_points.shape)

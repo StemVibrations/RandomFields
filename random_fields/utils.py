@@ -8,6 +8,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 import gstools as gs
 
+
 def plot3D(coordinates: List[npt.NDArray[np.float64]],
            random_field: List[gs.field.srf.SRF],
            title: str = "Random Field",
@@ -79,8 +80,10 @@ def plot2D(coordinates: List[npt.NDArray[np.float64]],
         - output_folder (str): Output folder
         - output_name (str): Output fine name
         - colorbar_label (str): Label for the colorbar (optional, deafult = '')
-        - conditioning_coordinates (List[npt.NDArray[np.float64]]): List of coordinates if the conditioning points (optional, default = [])
-        - conditioning_values (List[npt.NDArray[np.float64]]): List of the values at the conditioning points (optional, default = [])
+        - conditioning_coordinates (List[npt.NDArray[np.float64]]): List of coordinates if the conditioning points
+        (optional, default = [])
+        - conditioning_values (List[npt.NDArray[np.float64]]): List of the values at the conditioning points
+          (optional, default = [])
         - figsize (Tuple[float, float]): Figure size (optional, default = (6, 5))
         - show (bool): Show the plot (optional, default = False)
     """
@@ -166,10 +169,12 @@ def plot1D(coordinates: List[npt.NDArray[np.float64]],
 
     if conditional_points:
         plt.plot(x, conditional_points[2], label='kriged field', color='k')
-        plt.fill_between(x.ravel(), conditional_points[2] - 1.65 * conditional_points[3],
-                            conditional_points[2] + 1.65 * conditional_points[3],
-                            label='90% uncertainty bound',
-                            color='gray', alpha=0.5)
+        plt.fill_between(x.ravel(),
+                         conditional_points[2] - 1.65 * conditional_points[3],
+                         conditional_points[2] + 1.65 * conditional_points[3],
+                         label='90% uncertainty bound',
+                         color='gray',
+                         alpha=0.5)
         plt.scatter(conditional_points[0], conditional_points[1], label='conditioning points', color='k')
         plt.legend()
 

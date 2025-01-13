@@ -74,13 +74,13 @@ class MarginalTransformation():
         self._interp_log_data = np.interp(self._interp_z, z_points, x_points_ln)
 
     def plot(self,
-             title: str="Marginal distribution transformation",
-             output_folder: Path=Path("./"),
-             output_name: str="marginal_distribution.png",
-             x_label: str=r'$Z\sim N(0, 1)$',
-             y_label: str=r'$X$',
-             figsize: Tuple[float, float]=(6, 5),
-             show: bool=False) -> None:
+             title: str = "Marginal distribution transformation",
+             output_folder: Path = Path("./"),
+             output_name: str = "marginal_distribution.png",
+             x_label: str = r'$Z\sim N(0, 1)$',
+             y_label: str = r'$X$',
+             figsize: Tuple[float, float] = (6, 5),
+             show: bool = False) -> None:
         r"""Plots the transformation model for the marginal distribution.
 
         Args:
@@ -183,7 +183,7 @@ class CPT_data:
         self.young_modulus = np.empty(0)
         self.poisson = 0.495  # ToDo: add Poisson ratio see #6
 
-    def read_cpt_data(self, addition: bool=False) -> None:
+    def read_cpt_data(self, addition: bool = False) -> None:
         """read_cpt_data Reads in and pre-processes the CPT data
 
         Args:
@@ -231,7 +231,7 @@ class CPT_data:
                 seen.add(value.name)
         return unique_idx
 
-    def interpret_cpt_data(self, interpreter: Optional[RobertsonCptInterpretation]=None, v_dim: int=1) -> None:
+    def interpret_cpt_data(self, interpreter: Optional[RobertsonCptInterpretation] = None, v_dim: int = 1) -> None:
         """
         Interpret_cpt_data interprets the CPT data based on the provided interpreter settings
 
@@ -319,7 +319,7 @@ class CPT_data:
                                x_ref: float = 0.,
                                y_ref: float = 0.,
                                orientation_x_axis: float = 0.,
-                               based_on_midpoint: bool=False) -> None:
+                               based_on_midpoint: bool = False) -> None:
         """
         Coordinate system transformation, relative to a reference point (x_ref, y_ref)
 
@@ -344,18 +344,17 @@ class CPT_data:
 
         # rotate counterclock-wise back to N000  minus 90 degrees:
         theta_rad = orientation_x_axis / 180 * np.pi - np.pi / 2
-        rotation = np.array([[np.cos(theta_rad), 0, -np.sin(theta_rad)],
-                             [0., 1., 0.],
+        rotation = np.array([[np.cos(theta_rad), 0, -np.sin(theta_rad)], [0., 1., 0.],
                              [np.sin(theta_rad), 0, np.cos(theta_rad)]])
 
         self.data_coords = self.data_coords @ rotation.T
         self.cpt_locations = self.cpt_locations @ rotation[::2, ::2].T
 
-
-    def plot_coordinates(self, output_folder: Path=Path("./"),
-                         output_name: str="coordinates.png",
-                         original_coordinates: bool=False,
-                         show: bool=False) -> None:
+    def plot_coordinates(self,
+                         output_folder: Path = Path("./"),
+                         output_name: str = "coordinates.png",
+                         original_coordinates: bool = False,
+                         show: bool = False) -> None:
         """
         Plots the coordinates of the CPTs
 
@@ -380,11 +379,12 @@ class CPT_data:
             plt.show()
         plt.close()
 
+
 class GeostatisticalModel():
     """
     Class for the characterisation of spatial variability by means of a geostatistical model
 
-    Attr:
+    Attributes:
         - nb_dimensions (int): number of physical dimensions (1, 2 or 3)
         - v_dim (int): index corresponding to vertical
         - gpr (:class:`sklearn.gaussian_process.GaussianProcessRegressor`). Gaussian process regressor.
@@ -394,11 +394,13 @@ class GeostatisticalModel():
             geostatistical model.
         - noise_level (Optional[float]): noise level b
         - vertical_scale_fluctuation (Optional[float]): vertical scale of fluctuation
-        - anisotropy (Optional[List[np.float64]]): anisotropy in the scale of fluctuation, relative to the vertical scale of fluctuation.
+        - anisotropy (Optional[List[np.float64]]): anisotropy in the scale of fluctuation, relative to the vertical
+          scale of fluctuation.
 
     """
 
-    def __init__(self, nb_dimensions: int,
+    def __init__(self,
+                 nb_dimensions: int,
                  v_dim: int,
                  length_scale: float = 100.,
                  length_scale_bounds: List[float] = [1.0, 1000.],
@@ -424,9 +426,9 @@ class GeostatisticalModel():
 
         self.data_coords = np.empty(0)
         self.data_values = np.empty(0)
-        self.noise_level = None
-        self.vertical_scale_fluctuation = None
-        self.anisotropy = None
+        self.noise_level = np.empty(0)
+        self.vertical_scale_fluctuation = np.empty(0)
+        self.anisotropy = np.empty(0)
 
         # check if `kernel` has the correct parent class
         if custom_kernel:
@@ -485,10 +487,11 @@ class GeostatisticalModel():
             mask = np.arange(len(gpr_length_scales)) != self.v_dim
             self.anisotropy = gpr_length_scales[mask] / gpr_length_scales[self.v_dim]
 
+
 class ElasticityFieldsFromCpt:
     """Class for the automatic generation of fields of elastic parameters (vs, rho, G0 and E)
 
-        Attr:
+        Attributes:
             - poisson_ratio (float): poisson ratio.
             - cpt_file_folder (str): path of the folder containing the CPT files (.gef)
             - x_ref (float): physical x-coordinate of the origin of the model
@@ -500,7 +503,6 @@ class ElasticityFieldsFromCpt:
                 geostatistical model.
             - return_property (str): property to return through attribute `ElasticityFieldsFromCpt.generated_field`.
                 Options are `young_modulus`, `rho`, `vs`, `G0`
-
             - conditioning_data (class:`CPT_data`): instance of the `class:CPT_data` class.
             - coord_calibration (npt.NDArray[np.numpy64]): coordinates of the thinned data used for the calibration
                 of the geostatistical model.
@@ -516,34 +518,36 @@ class ElasticityFieldsFromCpt:
 
             - vs (npt.NDArray[np.float64]): generated conditioned random field of shear wave velocity `vs`
             - rho (npt.NDArray[np.float64]): generated conditioned random field of density `rho`
-            - g0 (npt.NDArray[np.float64]): generated conditioned random field of shear modulus `g0 = rho * vs**2`
+            - G0 (npt.NDArray[np.float64]): generated conditioned random field of shear modulus `G0 = rho * vs**2`
             - young_modulus (npt.NDArray[np.float64]): generated conditioned random field of elastic modulus
-                 `young_modulus = 2 * g0 * (1. + poisson_ratio)`
+                 `young_modulus = 2 * G0 * (1. + poisson_ratio)`
             - generated_field (list): list of randopm field values corresponding to parameter `return_property`
     """
 
     def __init__(self,
-                 cpt_file_folder: str='./',
-                 x_ref: float=0.,
-                 y_ref: float=0.,
-                 orientation_x_axis: float=0.,
-                 based_on_midpoint: bool=False,
-                 max_conditioning_points: int=2000,
-                 return_property: str='young_modulus') -> None:
+                 cpt_file_folder: str = './',
+                 x_ref: float = 0.,
+                 y_ref: float = 0.,
+                 orientation_x_axis: float = 0.,
+                 based_on_midpoint: bool = False,
+                 max_conditioning_points: int = 2000,
+                 seed: int = 14,
+                 return_property: str = 'young_modulus') -> None:
         """
-        initiation of the class
+        Initiation of the class
 
         Args:
-            - cpt_file_folder (str, optional): path to tyhe folder containing the CPT files (.gef).
-            - x_ref (float, optional): physical x-coordinate of the origin of the model. Defaults to 0..
-            - y_ref (float, optional): physical y-coordinate of the origin of the model. Defaults to 0..
-            - orientation_x_axis (float, optional): orientation of the x-axis of the model
-                (azimuth, clockwise g=from the North). Defaults to 0..
-            - based_on_midpoint (bool, optional): If True, ignores x_ref and y_ref and places origin of the model
+            - cpt_file_folder (str): path to tyhe folder containing the CPT files (.gef). Defaults to './'.
+            - x_ref (float): physical x-coordinate of the origin of the model. Defaults to 0.
+            - y_ref (float): physical y-coordinate of the origin of the model. Defaults to 0.
+            - orientation_x_axis (float): orientation of the x-axis of the model
+                (azimuth, clockwise g=from the North). Defaults to 0.
+            - based_on_midpoint (bool): If True, ignores x_ref and y_ref and places origin of the model
                 in the center of the set of CPT locations. Defaults to False.
-            - max_conditioning_points (int, optional): Maximum number of data points to use in the calibration
+            - max_conditioning_points (int): Maximum number of data points to use in the calibration
                 of the geostatistical model. Defaults to 2000.
-            - return_property (str, optional): property to return through attribute
+            - seed (int): Seed for the `:class:RandomFields`. Defaults to 14.
+            - return_property (str): property to return through attribute
                 `ElasticityFieldsFromCpt.generated_field`. Options are `young_modulus`, `rho`, `vs`, `G0`.
                 Defaults to `young_modulus`.
         """
@@ -556,7 +560,10 @@ class ElasticityFieldsFromCpt:
         self.max_conditioning_points = max_conditioning_points
         self.return_property = return_property
 
-        self.conditioning_data = CPT_data(cpt_directory=self.cpt_file_folder)
+        self.seed = seed
+        np.random.seed(seed)
+
+        self.conditioning_data = CPT_data(cpt_directory=Path(self.cpt_file_folder))
         self.conditioning_data.read_cpt_data()
         self.conditioning_data.interpret_cpt_data()
         self.conditioning_data.data_coordinate_change(orientation_x_axis=self.orientation_x_axis,
@@ -568,25 +575,29 @@ class ElasticityFieldsFromCpt:
 
         self.trans_model_rho = MarginalTransformation(self.conditioning_data.rho)
         self.trans_model_vs = MarginalTransformation(self.conditioning_data.vs)
-        self.geostat_model = None
-        self.random_fields_vs = None
-        self.random_fields_rho = None
-        self.vs = None
-        self.rho = None
-        self.GO = None
-        self.young_modulus = None
-        self.generated_field = None
+        # self.geostat_model = GeostatisticalModel(nb_dimensions=3, v_dim=1)
+        # self.random_fields_vs = RandomFields(model_name=ModelName.Gaussian, n_dim=3, mean=0, variance=1,
+        #                                      v_scale_fluctuation=1.0, anisotropy=[1., 1.], angle=[0., 0.],
+        # )
+        self.geostat_model: Optional[GeostatisticalModel] = None
+        self.random_fields_vs: Optional[RandomFields] = None
 
-    def calibrate_geostat_model(self, v_dim: int=1, calibration_indices: tuple=(0, 1), seed: int=14) -> None:
+        self.random_fields_rho: Optional[RandomFields] = None
+        self.vs = np.empty(0)
+        self.rho = np.empty(0)
+        self.GO = np.empty(0)
+        self.young_modulus = np.empty(0)
+        self.generated_field: List[npt.NDArray[np.float64]] = [np.empty(0)]
+
+    def calibrate_geostat_model(self, v_dim: int = 1, calibration_indices: Tuple[int, int] = (0, 1)) -> None:
         """calibrates the geostatistical model
 
         Args:
-            - v_dim (int, optional): vertical dimension. Defaults to 1.
-            - calibration_indices (Tuple, optional): _description_. Defaults to (0,1).
-            - seed (int, optional): Seed for the `:class:RandomFields`. Defaults to 14.
+            - v_dim (int): vertical dimension. Defaults to 1.
+            - calibration_indices (Tuple): _description_. Defaults to (0, 1).
         """
 
-        np.random.seed(seed)
+        np.random.seed(self.seed)
 
         ndim_calibrate = len(calibration_indices)
         self.coord_calibration = np.zeros([self.max_conditioning_points, 3])
@@ -603,10 +614,10 @@ class ElasticityFieldsFromCpt:
                                              n_dim=3,
                                              mean=0,
                                              variance=1,
-                                             v_scale_fluctuation=self.geostat_model.vertical_scale_fluctuation,
-                                             anisotropy=(self.geostat_model.anisotropy * 2)[:2],
-                                             angle=[0] * 2,
-                                             seed=seed,
+                                             v_scale_fluctuation=float(self.geostat_model.vertical_scale_fluctuation),
+                                             anisotropy=([float(self.geostat_model.anisotropy)] * 2)[:2],
+                                             angle=[0.] * 2,
+                                             seed=self.seed,
                                              max_conditioning_points=self.max_conditioning_points)
         self.random_fields_vs.set_conditioning_points(points=self.coord_calibration,
                                                       values=self.trans_model_vs.x_to_z(
@@ -616,10 +627,10 @@ class ElasticityFieldsFromCpt:
                                               n_dim=3,
                                               mean=0,
                                               variance=1,
-                                              v_scale_fluctuation=self.geostat_model.vertical_scale_fluctuation,
-                                              anisotropy=(self.geostat_model.anisotropy * 2)[:2],
+                                              v_scale_fluctuation=float(self.geostat_model.vertical_scale_fluctuation),
+                                              anisotropy=([float(self.geostat_model.anisotropy)] * 2)[:2],
                                               angle=[0] * 2,
-                                              seed=seed + 1,
+                                              seed=self.seed + 1,
                                               max_conditioning_points=self.max_conditioning_points)
         self.random_fields_rho.set_conditioning_points(points=self.coord_calibration,
                                                        values=self.trans_model_rho.x_to_z(
@@ -634,12 +645,14 @@ class ElasticityFieldsFromCpt:
         """
 
         # generate conditioned standard-normal equivalent
+        assert self.random_fields_vs is not None, "RandomFields instance not initialized"
         self.random_fields_vs.generate_conditioned(nodes=coordinates)
+        assert self.random_fields_rho is not None, "RandomFields instance not initialized"
         self.random_fields_rho.generate_conditioned(nodes=coordinates)
 
         # transform standard-normal fields to physical (marginal) distributions:
-        self.vs = self.trans_model_vs.z_to_x(self.random_fields_vs.conditioned_random_field)
-        self.rho = self.trans_model_rho.z_to_x(self.random_fields_rho.conditioned_random_field)
+        self.vs = self.trans_model_vs.z_to_x(np.array(self.random_fields_vs.conditioned_random_field))
+        self.rho = self.trans_model_rho.z_to_x(np.array(self.random_fields_rho.conditioned_random_field))
 
         # derive dependent fields
         self.GO = self.rho * self.vs**2
@@ -650,7 +663,7 @@ class ElasticityFieldsFromCpt:
             self.generated_field = list(self.young_modulus)
         elif self.return_property.lower() == 'rho':
             self.generated_field = list(self.rho)
-        elif self.return_property.lower() == 'g0':
+        elif self.return_property.lower() == 'G0':
             self.generated_field = list(self.GO)
         elif self.return_property.lower() == 'vs':
             self.generated_field = list(self.vs)
