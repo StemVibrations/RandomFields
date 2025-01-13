@@ -3,8 +3,8 @@ RandomFields tutorials
 
 .. _tutorial2:
 
-Example in 2D
--------------
+2D Random Field
+---------------
 
 This tutorial shows step by step guide on how to set up the random field generator in 2D
 and visualise the resulting random fields.

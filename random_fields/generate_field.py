@@ -18,12 +18,9 @@ class ModelName(Enum):
     Linear = gs.Linear
 
 
-class RandomFields():
+class RandomFields:
     """
     Generates (conditioned) random fields
-
-    Inheritance:
-        - None
 
     Attributes:
         - max_conditioning_points (int): maximum number of

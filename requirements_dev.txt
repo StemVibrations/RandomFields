@@ -10,4 +10,4 @@ yapf==0.43.0
 tox==4.23.2
 flake8==7.0.0
 pre-commit==3.6.2
-CPTtool==2.2.2
+d-geolib_plus=0.4.1
