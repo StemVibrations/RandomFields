@@ -187,7 +187,7 @@ class CPT_data:
             self.cpt_list = []
             self.cpt_filepaths = []
 
-        list_of_files = os.listdir(self.cpt_directory)
+        list_of_files = sorted(os.listdir(self.cpt_directory))
 
         files_type = {'.gef': GefCpt, '.xml': BroXmlCpt}
 
@@ -569,13 +569,13 @@ class ElasticityFieldsFromCpt():
         self.young_modulus = None
         self.generated_field = None
 
-    def calibrate_geostat_model(self, v_dim: int = 1, calibration_indices: tuple = (0, 1), seed: int = 13):
+    def calibrate_geostat_model(self, v_dim: int = 1, calibration_indices: tuple = (0, 1), seed: int = 14):
         """calibrates the geostatistical model
 
         Args:
             v_dim (int, optional): vertical dimension. Defaults to 1.
             calibration_indices (Tuple, optional): _description_. Defaults to (0,1).
-            seed (int, optional): Seed for the `:class:RandomFields`. Defaults to 13.
+            seed (int, optional): Seed for the `:class:RandomFields`. Defaults to 14.
         """
 
         #
