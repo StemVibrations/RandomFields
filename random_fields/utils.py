@@ -57,7 +57,11 @@ def plot3D(coordinates: List[npt.NDArray[np.float64]],
     if conditional_points:
         ax.scatter(conditional_points[0][:, 0],
                    conditional_points[0][:, 1],
-                   conditional_points[0][:, 2], c=conditional_points[1], vmin=vmin, vmax=vmax, cmap="viridis")
+                   conditional_points[0][:, 2],
+                   c=conditional_points[1],
+                   vmin=vmin,
+                   vmax=vmax,
+                   cmap="viridis")
 
     cax = ax.inset_axes((1.1, 0., 0.05, 1))
     norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)

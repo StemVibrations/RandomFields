@@ -612,7 +612,9 @@ class ElasticityFieldsFromCpt:
         ndim_calibrate = len(calibration_indices)
         self.coordinates_sampled_conditioning = np.zeros([self.max_conditioning_points, 3])
         for i in calibration_indices:
-            self.coordinates_sampled_conditioning[:, i] = self.conditioning_data.data_coords[self.conditional_sample_index, i]
+            self.coordinates_sampled_conditioning[:,
+                                                  i] = self.conditioning_data.data_coords[self.conditional_sample_index,
+                                                                                          i]
 
         # calibrate geostatistical model based on standard-normal equivalent values of the shear wave velocity data
         self.geostat_model = GeostatisticalModel(nb_dimensions=ndim_calibrate, v_dim=v_dim)
