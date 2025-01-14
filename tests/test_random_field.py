@@ -1,8 +1,11 @@
+import os
 import pickle
 import numpy as np
 import pytest
 from scipy.stats import norm
 from random_fields.generate_field import RandomFields, ModelName
+from random_fields.geostatistical_cpt_interpretation import ElasticityFieldsFromCpt, RandomFieldProperties
+from random_fields.utils import plot3D
 
 
 def test_model_names():
@@ -144,3 +147,59 @@ def test_conditioned_RF_3D_mean_variance():
     np.testing.assert_array_almost_equal(kriging_mean_ref, rf.kriging_mean, decimal=4)
     np.testing.assert_array_almost_equal(kriging_std_ref, rf.kriging_std, decimal=4)
     np.testing.assert_array_almost_equal(kriging_field_ref, rf.conditioned_random_field, decimal=4)
+
+
+def test_conditioned_RF_helper_3D():
+    """
+    Test the ElasticityFieldsFromCpt class
+    """
+
+    orientation_x_axis = 72.
+    cpt_folder = "./tests/cpts/gef"
+    elastic_field_generator_cpt = ElasticityFieldsFromCpt(cpt_file_folder=cpt_folder,
+                based_on_midpoint = True,
+                max_conditioning_points = 1000,
+                orientation_x_axis = orientation_x_axis,
+                porosity = 0.3,
+                water_density = 1000,
+                return_property = [RandomFieldProperties.YOUNG_MODULUS, RandomFieldProperties.DENSITY_SOLID],
+                )
+    elastic_field_generator_cpt.calibrate_geostat_model()
+
+    # create grit of points on the domnain (-220,220) by (-24,-1) to generate a field for.
+    import numpy as np
+    x = np.linspace(-5, 5, 21)
+    y = np.linspace(-25, 0, 26)
+    z = np.linspace(0, 30, 31)
+    X, Y, Z = np.meshgrid(x, y, z)
+
+    elastic_field_generator_cpt.generate(np.array([X.ravel(), Y.ravel(), Z.ravel()]).T)
+
+    plot3D([np.array([X.ravel(), Y.ravel(), Z.ravel()]).T], [elastic_field_generator_cpt.generated_field[0]],
+            title="Random Field",
+           output_folder="./",
+           output_name="random_field_3D.png",
+           figsize=(10, 10),
+           conditional_points=[elastic_field_generator_cpt.coordinates_sampled_conditioning,
+                               elastic_field_generator_cpt.conditioning_sampled_data[0]],
+           )
+
+    with open("./tests/data/conditional_random_field_3D.pickle", "rb") as fi:
+        data_org = pickle.load(fi)
+
+    assert os.path.isfile("random_field_3D.png")
+    os.remove("random_field_3D.png")
+    assert all(data_org[0] == elastic_field_generator_cpt.generated_field[0])
+    assert all(data_org[1] == elastic_field_generator_cpt.generated_field[1])
+
+def test_RF_properties():
+    """
+    Test the RandomFieldProperties enum
+    """
+    # Check that the enum members are instances of RandomFieldProperties
+    assert isinstance(RandomFieldProperties.YOUNG_MODULUS, RandomFieldProperties)
+    assert isinstance(RandomFieldProperties.DENSITY_SOLID, RandomFieldProperties)
+
+    # Check that the names match correctly
+    assert RandomFieldProperties.YOUNG_MODULUS.name == "YOUNG_MODULUS"
+    assert RandomFieldProperties.DENSITY_SOLID.name == "DENSITY_SOLID"
