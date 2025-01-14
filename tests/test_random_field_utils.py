@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import pickle
 import os
 import sys
 from random_fields.generate_field import RandomFields, ModelName
@@ -57,22 +58,18 @@ def test_distribution_RF_struc_3D(cleanup_generated_files):
     plot3D([np.array([x.ravel(), y.ravel(), z.ravel()]).T], [rf.random_field],
            title="Random Field",
            output_folder="./",
-           output_name="random_field.eps")
+           output_name="random_field.png")
 
     if sys.platform == "win32":
-        file_test = "./tests/data/random_field_3D_windows.eps"
+        file_test = "./tests/data/random_field_3D_windows.pickle"
     elif sys.platform == "linux":
-        file_test = "./tests/data/random_field_3D_linux.eps"
+        file_test = "./tests/data/random_field_3D_linux.pickle"
     else:
         raise Exception("Platform not supported")
 
-    with open(file_test, "r") as fi:
-        data_org = fi.read().splitlines()
+    with open(file_test, "rb") as fi:
+        data_test = pickle.load(fi)
 
-    with open("./random_field.eps", "r") as fi:
-        data_new = fi.read().splitlines()
-
-    header = 5
-    idx_end = data_org.index("currentfile DataString readhexstring pop")
-    data = [val == data_new[header + i] for i, val in enumerate(data_org[header:idx_end])]
-    assert all(data)
+    assert os.path.isfile("random_field.png")
+    os.remove("random_field.png")
+    assert all(rf.random_field.field == data_test)
