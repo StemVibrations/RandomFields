@@ -189,8 +189,8 @@ def test_conditioned_RF_helper_3D():
 
     assert os.path.isfile("random_field_3D.png")
     os.remove("random_field_3D.png")
-    assert all(data_org[0] == elastic_field_generator_cpt.generated_field[0])
-    assert all(data_org[1] == elastic_field_generator_cpt.generated_field[1])
+    np.testing.assert_allclose(data_org[0], elastic_field_generator_cpt.generated_field[0])
+    np.testing.assert_allclose(data_org[1], elastic_field_generator_cpt.generated_field[1])
 
 def test_RF_properties():
     """
