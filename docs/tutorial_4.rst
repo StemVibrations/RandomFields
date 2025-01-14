@@ -3,7 +3,7 @@ RandomFields tutorials
 
 .. _tutorial4:
 
-2D conditioned Random Field on CPT data
+2D/3D conditioned Random Field on CPT data
 ---------------------------------------
 This tutorial shows how a subsurface model can be created directly from CPT data.
 First, the concept of the CPT-based random field generation for subsurface models is presented.
@@ -235,4 +235,3 @@ To visualise the results we can make use of the `plot3D` function.
         show=True)
 
 .. image:: _static/random_field_3d_young.png
-    
