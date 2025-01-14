@@ -215,6 +215,7 @@ Now we create a list of the points where we want to generate the random field. I
 This grid is typically the mesh of a finite element calculation.
 
 .. code-block:: python
+
     x = np.linspace(-5, 5, 21)
     y = np.linspace(-25, 0, 26)
     z = np.linspace(0, 30, 31)
@@ -225,6 +226,7 @@ This grid is typically the mesh of a finite element calculation.
 To visualise the results we can make use of the `plot3D` function.
 
 .. code=block:: python
+    
     plot3D([np.array([X.ravel(), Y.ravel(), Z.ravel()]).T], [elastic_field_generator_cpt.generated_field[0]],
         title="Random Field",
         output_folder="./",
