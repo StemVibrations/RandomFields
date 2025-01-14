@@ -71,5 +71,4 @@ def test_distribution_RF_struc_3D(cleanup_generated_files):
         data_test = pickle.load(fi)
 
     assert os.path.isfile("random_field.png")
-    os.remove("random_field.png")
     assert all(rf.random_field.field == data_test)
