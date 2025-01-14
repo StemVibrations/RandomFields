@@ -405,7 +405,6 @@ class GeostatisticalModel():
         - vertical_scale_fluctuation (Optional[float]): vertical scale of fluctuation
         - anisotropy (Optional[List[np.float64]]): anisotropy in the scale of fluctuation, relative to the vertical
           scale of fluctuation.
-
     """
 
     def __init__(self,
@@ -510,14 +509,14 @@ class ElasticityFieldsFromCpt:
                 the center of the set of CPT locations.
             - max_conditioning_points (int): Maximum number of data points to use in the calibration of the
                 geostatistical model.
-            - seed (int): Seed for the `:class:RandomFields`
             - porosity (float): porosity of the soil
             - water_density (float): density of the water
             - return_property (str): property to return through attribute `ElasticityFieldsFromCpt.generated_field`.
                 Options are `young_modulus`, `rho`, `vs`, `G0`
+            - seed (int): Seed for the `:class:RandomFields`
+            - coordinates_sampled_conditioning (npt.NDArray[np.numpy64]): coordinates of the thinned data used for the
+                calibration of the geostatistical model.
             - conditioning_data (class:`CPT_data`): instance of the `class:CPT_data` class.
-            - coord_calibration (npt.NDArray[np.numpy64]): coordinates of the thinned data used for the calibration
-                of the geostatistical model.
             - conditional_sample_index (npt.NDArray[int]): Indices of the sample from the conditioning data, selected
                 for the calibration.
             - trans_model_rho (class:`MarginalTransformation`): Transformation model of the marginal distribution
@@ -525,14 +524,12 @@ class ElasticityFieldsFromCpt:
             - trans_model_vs (class:`MarginalTransformation`): Transformation model of the marginal distribution of
                 shear wave velocity vs.
             - geostat_model (class:`GeostatisticalModel`): Geostatistical model
-            - random_fields_vs (class:`RandomFields`): Random field generator for shear wave velocity `vs`
-            - random_fields_rho (class:`RandomFields`): Random field generator for shear wave velocity `rho`
-            - vs (npt.NDArray[np.float64]): generated conditioned random field of shear wave velocity `vs`
-            - rho (npt.NDArray[np.float64]): generated conditioned random field of density `rho`
-            - G0 (npt.NDArray[np.float64]): generated conditioned random field of shear modulus `G0 = rho * vs**2`
             - young_modulus (npt.NDArray[np.float64]): generated conditioned random field of elastic modulus
                  `young_modulus = 2 * G0 * (1. + poisson_ratio)`
+            - solid_density (npt.NDArray[np.float64]): generated conditioned random field of solid density
             - generated_field (list): list of randopm field values corresponding to parameter `return_property`
+            - _random_fields_vs (class:`RandomFields`): Random field generator for shear wave velocity `vs`
+            - _random_fields_rho (class:`RandomFields`): Random field generator for shear wave velocity `rho`
     """
 
     def __init__(self,
@@ -578,6 +575,7 @@ class ElasticityFieldsFromCpt:
         self.seed = seed
         np.random.seed(seed)
 
+        self.coordinates_sampled_conditioning = np.empty(0)
         self.conditioning_data = CPT_data(cpt_directory=Path(self.cpt_file_folder))
         self.conditioning_data.read_cpt_data()
         self.conditioning_data.interpret_cpt_data()
@@ -591,9 +589,8 @@ class ElasticityFieldsFromCpt:
         self.trans_model_rho = MarginalTransformation(self.conditioning_data.rho)
         self.trans_model_vs = MarginalTransformation(self.conditioning_data.vs)
         self.geostat_model: Optional[GeostatisticalModel] = None
-        self.random_fields_vs: Optional[RandomFields] = None
-
-        self.random_fields_rho: Optional[RandomFields] = None
+        self._random_fields_vs: Optional[RandomFields] = None
+        self._random_fields_rho: Optional[RandomFields] = None
         self.solid_density = np.empty(0)
         self.young_modulus = np.empty(0)
         self.generated_field: List[npt.NDArray[np.float64]] = []
@@ -623,32 +620,32 @@ class ElasticityFieldsFromCpt:
             self.trans_model_vs.x_to_z(self.conditioning_data.vs[self.conditional_sample_index]))
 
         # initiate two independent random field generators for shear wave velocity `vs` and density `rho`
-        self.random_fields_vs = RandomFields(model_name=ModelName.Gaussian,
-                                             n_dim=3,
-                                             mean=0,
-                                             variance=1,
-                                             v_scale_fluctuation=float(self.geostat_model.vertical_scale_fluctuation),
-                                             anisotropy=([float(self.geostat_model.anisotropy)] * 2)[:2],
-                                             angle=[0.] * 2,
-                                             seed=self.seed,
-                                             max_conditioning_points=self.max_conditioning_points)
-        self.random_fields_vs.set_conditioning_points(points=self.coordinates_sampled_conditioning,
-                                                      values=self.trans_model_vs.x_to_z(
-                                                          self.conditioning_data.vs[self.conditional_sample_index]),
-                                                      noise_level=self.geostat_model.noise_level)
-        self.random_fields_rho = RandomFields(model_name=ModelName.Gaussian,
+        self._random_fields_vs = RandomFields(model_name=ModelName.Gaussian,
                                               n_dim=3,
                                               mean=0,
                                               variance=1,
                                               v_scale_fluctuation=float(self.geostat_model.vertical_scale_fluctuation),
                                               anisotropy=([float(self.geostat_model.anisotropy)] * 2)[:2],
-                                              angle=[0] * 2,
-                                              seed=self.seed + 1,
+                                              angle=[0.] * 2,
+                                              seed=self.seed,
                                               max_conditioning_points=self.max_conditioning_points)
-        self.random_fields_rho.set_conditioning_points(points=self.coordinates_sampled_conditioning,
-                                                       values=self.trans_model_rho.x_to_z(
-                                                           self.conditioning_data.rho[self.conditional_sample_index]),
+        self._random_fields_vs.set_conditioning_points(points=self.coordinates_sampled_conditioning,
+                                                       values=self.trans_model_vs.x_to_z(
+                                                           self.conditioning_data.vs[self.conditional_sample_index]),
                                                        noise_level=self.geostat_model.noise_level)
+        self._random_fields_rho = RandomFields(model_name=ModelName.Gaussian,
+                                               n_dim=3,
+                                               mean=0,
+                                               variance=1,
+                                               v_scale_fluctuation=float(self.geostat_model.vertical_scale_fluctuation),
+                                               anisotropy=([float(self.geostat_model.anisotropy)] * 2)[:2],
+                                               angle=[0] * 2,
+                                               seed=self.seed + 1,
+                                               max_conditioning_points=self.max_conditioning_points)
+        self._random_fields_rho.set_conditioning_points(points=self.coordinates_sampled_conditioning,
+                                                        values=self.trans_model_rho.x_to_z(
+                                                            self.conditioning_data.rho[self.conditional_sample_index]),
+                                                        noise_level=self.geostat_model.noise_level)
 
     def generate(self, coordinates: npt.NDArray[np.float64]) -> None:
         """
@@ -659,14 +656,14 @@ class ElasticityFieldsFromCpt:
         """
 
         # generate conditioned standard-normal equivalent
-        assert self.random_fields_vs is not None, "RandomFields instance not initialized"
-        self.random_fields_vs.generate_conditioned(nodes=coordinates)
-        assert self.random_fields_rho is not None, "RandomFields instance not initialized"
-        self.random_fields_rho.generate_conditioned(nodes=coordinates)
+        assert self._random_fields_vs is not None, "RandomFields instance not initialized"
+        self._random_fields_vs.generate_conditioned(nodes=coordinates)
+        assert self._random_fields_rho is not None, "RandomFields instance not initialized"
+        self._random_fields_rho.generate_conditioned(nodes=coordinates)
 
         # transform standard-normal fields to physical (marginal) distributions:
-        vs = self.trans_model_vs.z_to_x(np.array(self.random_fields_vs.conditioned_random_field))
-        rho = self.trans_model_rho.z_to_x(np.array(self.random_fields_rho.conditioned_random_field))
+        vs = self.trans_model_vs.z_to_x(np.array(self._random_fields_vs.conditioned_random_field))
+        rho = self.trans_model_rho.z_to_x(np.array(self._random_fields_rho.conditioned_random_field))
 
         # derive dependent fields
         GO = rho * vs**2

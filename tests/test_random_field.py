@@ -156,14 +156,15 @@ def test_conditioned_RF_helper_3D():
 
     orientation_x_axis = 72.
     cpt_folder = "./tests/cpts/gef"
-    elastic_field_generator_cpt = ElasticityFieldsFromCpt(cpt_file_folder=cpt_folder,
-                based_on_midpoint = True,
-                max_conditioning_points = 1000,
-                orientation_x_axis = orientation_x_axis,
-                porosity = 0.3,
-                water_density = 1000,
-                return_property = [RandomFieldProperties.YOUNG_MODULUS, RandomFieldProperties.DENSITY_SOLID],
-                )
+    elastic_field_generator_cpt = ElasticityFieldsFromCpt(
+        cpt_file_folder=cpt_folder,
+        based_on_midpoint=True,
+        max_conditioning_points=1000,
+        orientation_x_axis=orientation_x_axis,
+        porosity=0.3,
+        water_density=1000,
+        return_property=[RandomFieldProperties.YOUNG_MODULUS, RandomFieldProperties.DENSITY_SOLID],
+    )
     elastic_field_generator_cpt.calibrate_geostat_model()
 
     # create grit of points on the domnain (-220,220) by (-24,-1) to generate a field for.
@@ -175,14 +176,18 @@ def test_conditioned_RF_helper_3D():
 
     elastic_field_generator_cpt.generate(np.array([X.ravel(), Y.ravel(), Z.ravel()]).T)
 
-    plot3D([np.array([X.ravel(), Y.ravel(), Z.ravel()]).T], [elastic_field_generator_cpt.generated_field[0]],
-            title="Random Field",
-           output_folder="./",
-           output_name="random_field_3D.png",
-           figsize=(10, 10),
-           conditional_points=[elastic_field_generator_cpt.coordinates_sampled_conditioning,
-                               elastic_field_generator_cpt.conditioning_sampled_data[0]],
-           )
+    plot3D(
+        [np.array([X.ravel(), Y.ravel(), Z.ravel()]).T],
+        [elastic_field_generator_cpt.generated_field[0]],
+        title="Random Field",
+        output_folder="./",
+        output_name="random_field_3D.png",
+        figsize=(10, 10),
+        conditional_points=[
+            elastic_field_generator_cpt.coordinates_sampled_conditioning,
+            elastic_field_generator_cpt.conditioning_sampled_data[0]
+        ],
+    )
 
     with open("./tests/data/conditional_random_field_3D.pickle", "rb") as fi:
         data_org = pickle.load(fi)
@@ -191,6 +196,7 @@ def test_conditioned_RF_helper_3D():
     os.remove("random_field_3D.png")
     np.testing.assert_allclose(data_org[0], elastic_field_generator_cpt.generated_field[0], rtol=1e-3)
     np.testing.assert_allclose(data_org[1], elastic_field_generator_cpt.generated_field[1], rtol=1e-3)
+
 
 def test_RF_properties():
     """
