@@ -4,7 +4,7 @@ RandomFields tutorials
 .. _tutorial4:
 
 2D conditioned Random Field on CPT data
--------------------------------------
+---------------------------------------
 This tutorial shows how a subsurface model can be created directly from CPT data.
 First, the concept of the CPT-based random field generation for subsurface models is presented.
 Second, the implementation of the CPT-based random field generation is described.
@@ -44,6 +44,7 @@ First the necessary packages are imported, and the seed number is fixed for repr
     import numpy as np
     from random_fields.geostatistical_cpt_interpretation import CPT_data, MarginalTransformation, GeostatisticalModel
     from random_fields.generate_field import RandomFields, ModelName
+    from random_fields.utils import plot2D
 
     seed = 14
     np.random.seed(seed)
@@ -80,7 +81,7 @@ The location of the CPTs can be visualised and its coordinated can be changed/ro
     :scale: 50%
 .. image:: _static/coordinates_2.png
     :scale: 50%
-    
+
 To create the transformation model, the marginal transformation is created.
 The marginal transformation model can be generated and visualised as follows:
 
@@ -162,14 +163,76 @@ The generated standard-normal field needs to be transformed to the marginal dist
     z_map = random_field_generator.conditioned_random_field
     vs_map = marginal_transformator.z_to_x(z_map[:250 * 250].reshape([250, 250]))
 
-    fig, ax = plt.subplots(figsize=(10, 5))
-    plt.contourf(X, Z, vs_map, vmin=50, vmax=400)
-    scatter = plt.scatter(cpt_data.data_coords[:, 2], cpt_data.data_coords[:, 1], c=cpt_data.vs, vmin=50, vmax=400)
-    plt.colorbar(scatter, ax=ax, label="Vs [m/s]")
-    plt.savefig(file_name)
-    plt.close()
+    plot2D([np.array([X.ravel(), Z.ravel()]).T], [vs_map],
+           title="Vs Random Field",
+           output_folder="./",
+           output_name="vs.png",
+           conditional_points=[cpt_data.data_coords[:, [2, 1]], cpt_data.vs],
+           figsize=(10, 5),
+           show=True)
 
 This results in a 2D cross section of the generated random field, on the shear wave velocity,
 conditioned on the CPT data.
 
 .. image:: _static/2D_cpt_conditioned_field.png
+
+
+3D conditioned Random Field on CPT data with helper function
+------------------------------------------------------------
+In Randomn Fields it is possible to create the conditional random field in 3D, by making use of a helper function.
+The helper function creates random fields with the Gaussian model, and for two properties: Young modulus and
+Solid density of the soil.
+
+The helper function is called `ElasticityFieldsFromCpt` and is part of
+the `random_fields.geostatistical_cpt_interpretation` class.
+
+First we import all the necessary packages:
+
+.. code-block:: python
+    import numpy as np
+    from random_fields.geostatistical_cpt_interpretation import ElasticityFieldsFromCpt, RandomFieldProperties
+    from random_fields.utils import plot3D
+
+Then we create the ElasticityFieldsFromCpt object. The `orientation_x_axis` is the angle of the x-axis in the model,
+the `porosity` is the porosity of the soil, and the `water_density` is the density of the water.
+The `return_property` is a list of the properties that we want to generate. In this case we want to generate the
+random field for the Young modulus.
+
+.. code-block:: python
+
+    elastic_field_generator_cpt = ElasticityFieldsFromCpt(cpt_file_folder=cpt_folder,
+                based_on_midpoint = True,
+                max_conditioning_points = 1000,
+                orientation_x_axis = 72,
+                porosity = 0.3,
+                water_density = 1000,
+                return_property = [RandomFieldProperties.YOUNG_MODULUS],
+                )
+
+    elastic_field_generator_cpt.calibrate_geostat_model()
+
+Now we create a list of the points where we want to generate the random field. In this case we generate a 3D grid.
+This grid is typically the mesh of a finite element calculation.
+
+.. code-block:: python
+    x = np.linspace(-5, 5, 21)
+    y = np.linspace(-25, 0, 26)
+    z = np.linspace(0, 30, 31)
+    X, Y, Z = np.meshgrid(x, y, z)
+
+    elastic_field_generator_cpt.generate(np.array([X.ravel(), Y.ravel(), Z.ravel()]).T)
+
+To visualise the results we can make use of the `plot3D` function.
+
+.. code=block:: python
+    plot3D([np.array([X.ravel(), Y.ravel(), Z.ravel()]).T], [elastic_field_generator_cpt.generated_field[0]],
+        title="Random Field",
+        output_folder="./",
+        output_name="random_field_3D.png",
+        figsize=(10, 10),
+        conditional_points=[elastic_field_generator_cpt.coordinates_sampled_conditioning,
+                            elastic_field_generator_cpt.conditioning_sampled_data[0]],
+        show=True)
+
+.. image:: _static/random_field_3d_young.png
+    

@@ -1,4 +1,5 @@
 import os
+from enum import Enum
 from typing import Optional, List, Tuple
 from pathlib import Path
 import numpy as np
@@ -14,6 +15,14 @@ from geolib_plus.robertson_cpt_interpretation import UnitWeightMethod
 from geolib_plus.robertson_cpt_interpretation import OCRMethod
 from geolib_plus.robertson_cpt_interpretation import ShearWaveVelocityMethod
 from random_fields.generate_field import RandomFields, ModelName
+
+
+class RandomFieldProperties(Enum):
+    """
+    Enum class for the properties of the random field supported in STEM
+    """
+    YOUNG_MODULUS = 0
+    DENSITY_SOLID = 1
 
 
 class MarginalTransformation():
@@ -259,61 +268,61 @@ class CPT_data:
         self.G0 = self.rho * self.vs**2
         self.young_modulus = 2. * self.G0 * (1. + self.poisson)
 
-    def save_conditioning_points_to_vtk(self, filename='conditioning_data.vtk', variable_names=['vs']):
-        """Saves the conditioning data to a .vtk file for visualisation.
-
-        Args:
-            - filename (str, optional): . Defaults to 'conditioning_data.vtk'.
-            - variable_names (list[str]): list of variables to save. variables should be attributes.
-
-        Raises:
-            ValueError: if type and dimensions of `coordinates` not correct
-            ValueError: if variables in `variable_names` are not an attribute
-            ValueError: if variable dimensions are not correct.
-        """
-        coordinates = self.data_coords
-
-        # ToDo: replace this with vtk writer
-
-        if not isinstance(coordinates, np.ndarray) or coordinates.shape[1] != 3:
-            raise ValueError("Coordinates should be a numpy array with shape (N, 3).")
-
-        n_points = len(coordinates)
-        n_values = len(variable_names)
-
-        scalars = []
-        for varname in variable_names:
-            if hasattr(self, varname):
-                scalar = self.__getattribute__(varname)
-                if len(scalar) == n_points and isinstance(scalar, np.ndarray):
-                    scalars.append(scalar)
-                else:
-                    raise ValueError(f"`{varname}` should be a numpy array of length {n_points}.")
-            else:
-                raise ValueError(f"{varname} is not an attribute of `conditioning_data`")
-
-        if not isinstance(scalars, list) or len(scalars) != len(variable_names) or len(
-                scalars[0]) != coordinates.shape[0]:
-            raise ValueError("Scalars should be a numpy array with shape (N, 3), matching the number of coordinates.")
-
-        with open(filename, 'w') as file:
-            file.write('# vtk DataFile Version 5.1\n')
-            file.write('vtk output\n')
-            file.write('ASCII\n')
-            file.write('DATASET POLYDATA\n')
-            file.write(f'POINTS {n_points} float\n')
-            for point in coordinates:
-                file.write('%10.2f %10.2f %10.2f\n' % (point[0], point[1], point[2]))
-            file.write(f'POINT_DATA {n_points}\n')
-            file.write(f'FIELD FieldData {n_values}\n')
-
-            for z, name in zip(scalars, variable_names):
-                file.write(f'{name} 1 {n_points} float\n')
-                for x in z:
-                    file.write('%.3g \n' % (x))
-                file.write('\n')
-
-        print(f"File saved as {filename}")
+    # def save_conditioning_points_to_vtk(self, filename='conditioning_data.vtk', variable_names=['vs']):
+    #     """Saves the conditioning data to a .vtk file for visualisation.
+    #
+    #     Args:
+    #         - filename (str, optional): . Defaults to 'conditioning_data.vtk'.
+    #         - variable_names (list[str]): list of variables to save. variables should be attributes.
+    #
+    #     Raises:
+    #         ValueError: if type and dimensions of `coordinates` not correct
+    #         ValueError: if variables in `variable_names` are not an attribute
+    #         ValueError: if variable dimensions are not correct.
+    #     """
+    #     coordinates = self.data_coords
+    #
+    #     # ToDo: replace this with vtk writer
+    #
+    #     if not isinstance(coordinates, np.ndarray) or coordinates.shape[1] != 3:
+    #         raise ValueError("Coordinates should be a numpy array with shape (N, 3).")
+    #
+    #     n_points = len(coordinates)
+    #     n_values = len(variable_names)
+    #
+    #     scalars = []
+    #     for varname in variable_names:
+    #         if hasattr(self, varname):
+    #             scalar = self.__getattribute__(varname)
+    #             if len(scalar) == n_points and isinstance(scalar, np.ndarray):
+    #                 scalars.append(scalar)
+    #             else:
+    #                 raise ValueError(f"`{varname}` should be a numpy array of length {n_points}.")
+    #         else:
+    #             raise ValueError(f"{varname} is not an attribute of `conditioning_data`")
+    #
+    #     if not isinstance(scalars, list) or len(scalars) != len(variable_names) or len(
+    #             scalars[0]) != coordinates.shape[0]:
+    #         raise ValueError("Scalars should be a numpy array with shape (N, 3), matching the number of coordinates.")
+    #
+    #     with open(filename, 'w') as file:
+    #         file.write('# vtk DataFile Version 5.1\n')
+    #         file.write('vtk output\n')
+    #         file.write('ASCII\n')
+    #         file.write('DATASET POLYDATA\n')
+    #         file.write(f'POINTS {n_points} float\n')
+    #         for point in coordinates:
+    #             file.write('%10.2f %10.2f %10.2f\n' % (point[0], point[1], point[2]))
+    #         file.write(f'POINT_DATA {n_points}\n')
+    #         file.write(f'FIELD FieldData {n_values}\n')
+    #
+    #         for z, name in zip(scalars, variable_names):
+    #             file.write(f'{name} 1 {n_points} float\n')
+    #             for x in z:
+    #                 file.write('%.3g \n' % (x))
+    #             file.write('\n')
+    #
+    #     print(f"File saved as {filename}")
 
     def data_coordinate_change(self,
                                x_ref: float = 0.,
@@ -501,12 +510,15 @@ class ElasticityFieldsFromCpt:
                 the center of the set of CPT locations.
             - max_conditioning_points (int): Maximum number of data points to use in the calibration of the
                 geostatistical model.
+            - seed (int): Seed for the `:class:RandomFields`
+            - porosity (float): porosity of the soil
+            - water_density (float): density of the water
             - return_property (str): property to return through attribute `ElasticityFieldsFromCpt.generated_field`.
                 Options are `young_modulus`, `rho`, `vs`, `G0`
             - conditioning_data (class:`CPT_data`): instance of the `class:CPT_data` class.
             - coord_calibration (npt.NDArray[np.numpy64]): coordinates of the thinned data used for the calibration
                 of the geostatistical model.
-            - thinning_sample_index (npt.NDArray[int]): Indices of the sample from the conditioning data, selected
+            - conditional_sample_index (npt.NDArray[int]): Indices of the sample from the conditioning data, selected
                 for the calibration.
             - trans_model_rho (class:`MarginalTransformation`): Transformation model of the marginal distribution
                 of rho.
@@ -515,7 +527,6 @@ class ElasticityFieldsFromCpt:
             - geostat_model (class:`GeostatisticalModel`): Geostatistical model
             - random_fields_vs (class:`RandomFields`): Random field generator for shear wave velocity `vs`
             - random_fields_rho (class:`RandomFields`): Random field generator for shear wave velocity `rho`
-
             - vs (npt.NDArray[np.float64]): generated conditioned random field of shear wave velocity `vs`
             - rho (npt.NDArray[np.float64]): generated conditioned random field of density `rho`
             - G0 (npt.NDArray[np.float64]): generated conditioned random field of shear modulus `G0 = rho * vs**2`
@@ -532,7 +543,9 @@ class ElasticityFieldsFromCpt:
                  based_on_midpoint: bool = False,
                  max_conditioning_points: int = 2000,
                  seed: int = 14,
-                 return_property: str = 'young_modulus') -> None:
+                 porosity: float = 0.3,
+                 water_density: float = 1000.,
+                 return_property: List[RandomFieldProperties] = [RandomFieldProperties.YOUNG_MODULUS]) -> None:
         """
         Initiation of the class
 
@@ -547,9 +560,9 @@ class ElasticityFieldsFromCpt:
             - max_conditioning_points (int): Maximum number of data points to use in the calibration
                 of the geostatistical model. Defaults to 2000.
             - seed (int): Seed for the `:class:RandomFields`. Defaults to 14.
-            - return_property (str): property to return through attribute
-                `ElasticityFieldsFromCpt.generated_field`. Options are `young_modulus`, `rho`, `vs`, `G0`.
-                Defaults to `young_modulus`.
+            - porosity (float): porosity of the soil. Defaults to 0.3.
+            - water_density (float): density of the water. Defaults to 1000.
+            - return_property (List[RandomFieldProperties]): property to return
         """
         self.poisson_ratio = 0.495
         self.cpt_file_folder = cpt_file_folder
@@ -558,6 +571,8 @@ class ElasticityFieldsFromCpt:
         self.orientation_x_axis = orientation_x_axis
         self.based_on_midpoint = based_on_midpoint
         self.max_conditioning_points = max_conditioning_points
+        self.porosity = porosity
+        self.water_density = water_density
         self.return_property = return_property
 
         self.seed = seed
@@ -569,25 +584,20 @@ class ElasticityFieldsFromCpt:
         self.conditioning_data.data_coordinate_change(orientation_x_axis=self.orientation_x_axis,
                                                       based_on_midpoint=self.based_on_midpoint)
 
-        self.thinning_sample_index = np.random.choice(self.conditioning_data.data_coords.shape[0],
-                                                      size=self.max_conditioning_points,
-                                                      replace=False)
+        self.conditional_sample_index = np.random.choice(self.conditioning_data.data_coords.shape[0],
+                                                         size=self.max_conditioning_points,
+                                                         replace=False)
 
         self.trans_model_rho = MarginalTransformation(self.conditioning_data.rho)
         self.trans_model_vs = MarginalTransformation(self.conditioning_data.vs)
-        # self.geostat_model = GeostatisticalModel(nb_dimensions=3, v_dim=1)
-        # self.random_fields_vs = RandomFields(model_name=ModelName.Gaussian, n_dim=3, mean=0, variance=1,
-        #                                      v_scale_fluctuation=1.0, anisotropy=[1., 1.], angle=[0., 0.],
-        # )
         self.geostat_model: Optional[GeostatisticalModel] = None
         self.random_fields_vs: Optional[RandomFields] = None
 
         self.random_fields_rho: Optional[RandomFields] = None
-        self.vs = np.empty(0)
-        self.rho = np.empty(0)
-        self.GO = np.empty(0)
+        self.solid_density = np.empty(0)
         self.young_modulus = np.empty(0)
-        self.generated_field: List[npt.NDArray[np.float64]] = [np.empty(0)]
+        self.generated_field: List[npt.NDArray[np.float64]] = []
+        self.conditioning_sampled_data: List[npt.NDArray[np.float64]] = []
 
     def calibrate_geostat_model(self, v_dim: int = 1, calibration_indices: Tuple[int, int] = (0, 1)) -> None:
         """calibrates the geostatistical model
@@ -600,14 +610,15 @@ class ElasticityFieldsFromCpt:
         np.random.seed(self.seed)
 
         ndim_calibrate = len(calibration_indices)
-        self.coord_calibration = np.zeros([self.max_conditioning_points, 3])
+        self.coordinates_sampled_conditioning = np.zeros([self.max_conditioning_points, 3])
         for i in calibration_indices:
-            self.coord_calibration[:, i] = self.conditioning_data.data_coords[self.thinning_sample_index, i]
+            self.coordinates_sampled_conditioning[:, i] = self.conditioning_data.data_coords[self.conditional_sample_index, i]
 
         # calibrate geostatistical model based on standard-normal equivalent values of the shear wave velocity data
         self.geostat_model = GeostatisticalModel(nb_dimensions=ndim_calibrate, v_dim=v_dim)
-        self.geostat_model.calibrate(self.coord_calibration[:, calibration_indices],
-                                     self.trans_model_vs.x_to_z(self.conditioning_data.vs[self.thinning_sample_index]))
+        self.geostat_model.calibrate(
+            self.coordinates_sampled_conditioning[:, calibration_indices],
+            self.trans_model_vs.x_to_z(self.conditioning_data.vs[self.conditional_sample_index]))
 
         # initiate two independent random field generators for shear wave velocity `vs` and density `rho`
         self.random_fields_vs = RandomFields(model_name=ModelName.Gaussian,
@@ -619,9 +630,9 @@ class ElasticityFieldsFromCpt:
                                              angle=[0.] * 2,
                                              seed=self.seed,
                                              max_conditioning_points=self.max_conditioning_points)
-        self.random_fields_vs.set_conditioning_points(points=self.coord_calibration,
+        self.random_fields_vs.set_conditioning_points(points=self.coordinates_sampled_conditioning,
                                                       values=self.trans_model_vs.x_to_z(
-                                                          self.conditioning_data.vs[self.thinning_sample_index]),
+                                                          self.conditioning_data.vs[self.conditional_sample_index]),
                                                       noise_level=self.geostat_model.noise_level)
         self.random_fields_rho = RandomFields(model_name=ModelName.Gaussian,
                                               n_dim=3,
@@ -632,13 +643,14 @@ class ElasticityFieldsFromCpt:
                                               angle=[0] * 2,
                                               seed=self.seed + 1,
                                               max_conditioning_points=self.max_conditioning_points)
-        self.random_fields_rho.set_conditioning_points(points=self.coord_calibration,
+        self.random_fields_rho.set_conditioning_points(points=self.coordinates_sampled_conditioning,
                                                        values=self.trans_model_rho.x_to_z(
-                                                           self.conditioning_data.rho[self.thinning_sample_index]),
+                                                           self.conditioning_data.rho[self.conditional_sample_index]),
                                                        noise_level=self.geostat_model.noise_level)
 
     def generate(self, coordinates: npt.NDArray[np.float64]) -> None:
-        """generate random fields for `rho`, `vs` and derive fields `G0` and `young_modulus`.
+        """
+        Generate random fields for `rho`, `vs` and derive fields `young_modulus` and `solid density`.
 
         Args:
             - coordinates (npt.NDArray[np.float64]): 3D coordinated of points to generate random field values for
@@ -651,19 +663,21 @@ class ElasticityFieldsFromCpt:
         self.random_fields_rho.generate_conditioned(nodes=coordinates)
 
         # transform standard-normal fields to physical (marginal) distributions:
-        self.vs = self.trans_model_vs.z_to_x(np.array(self.random_fields_vs.conditioned_random_field))
-        self.rho = self.trans_model_rho.z_to_x(np.array(self.random_fields_rho.conditioned_random_field))
+        vs = self.trans_model_vs.z_to_x(np.array(self.random_fields_vs.conditioned_random_field))
+        rho = self.trans_model_rho.z_to_x(np.array(self.random_fields_rho.conditioned_random_field))
 
         # derive dependent fields
-        self.GO = self.rho * self.vs**2
-        self.young_modulus = 2 * self.GO * (1. + self.poisson_ratio)
+        GO = rho * vs**2
+        self.young_modulus = 2 * GO * (1. + self.poisson_ratio)
+        self.solid_density = rho * (1. - self.porosity) + self.porosity * self.water_density
 
-        # only one parameter is communicated back as the generated field to STEM
-        if self.return_property.lower() == 'young_modulus':
-            self.generated_field = list(self.young_modulus)
-        elif self.return_property.lower() == 'rho':
-            self.generated_field = list(self.rho)
-        elif self.return_property.lower() == 'G0':
-            self.generated_field = list(self.GO)
-        elif self.return_property.lower() == 'vs':
-            self.generated_field = list(self.vs)
+        for value in self.return_property:
+            if value.name == "YOUNG_MODULUS":
+                self.conditioning_sampled_data.append(
+                    self.conditioning_data.young_modulus[self.conditional_sample_index])
+                self.generated_field.append(self.young_modulus)
+            elif value.name == "DENSITY_SOLID":
+                rho_solid = self.conditioning_data.rho[self.conditional_sample_index] * (
+                    1. - self.porosity) + self.porosity * self.water_density
+                self.conditioning_sampled_data.append(rho_solid)
+                self.generated_field.append(self.solid_density)

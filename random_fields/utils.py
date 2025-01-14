@@ -14,6 +14,8 @@ def plot3D(coordinates: List[npt.NDArray[np.float64]],
            title: str = "Random Field",
            output_folder="./",
            output_name: str = "random_field.png",
+           figsize: Tuple[float, float] = (10, 10),
+           conditional_points: List[npt.NDArray[np.float64]] = [],
            show: bool = False):
     """
     Plots and saves 3D random field
@@ -24,6 +26,9 @@ def plot3D(coordinates: List[npt.NDArray[np.float64]],
         - title (str): Title of the plot
         - output_folder (str): Output folder
         - output_name (str): Output fine name
+        - figsize: Tuple[float, float] = (10, 10),
+        - conditional_points (List[npt.NDArray[np.float64]]): List of coordinates if the conditioning points
+          (optional, default = [])
         - show (bool): Show the plot (optional, default = False)
     """
     # create output folder
@@ -31,7 +36,7 @@ def plot3D(coordinates: List[npt.NDArray[np.float64]],
         os.makedirs(output_folder)
 
     # make plot
-    fig = plt.figure(1, figsize=(6, 5))
+    fig = plt.figure(1, figsize=figsize)
     ax: Axes3D = fig.add_subplot(projection='3d')
     ax.set_position([0.1, 0.1, 0.8, 0.8])
     # rotate the axes so that y is vertical
@@ -43,11 +48,16 @@ def plot3D(coordinates: List[npt.NDArray[np.float64]],
 
     for i, coord in enumerate(coordinates):
         x, y, z = coord[:, 0], coord[:, 1], coord[:, 2]
-        ax.scatter(x, y, z, c=rfield[i], vmin=vmin, vmax=vmax, cmap="viridis", edgecolors=None, marker="s")
+        ax.scatter(x, y, z, c=rfield[i], vmin=vmin, vmax=vmax, cmap="viridis", edgecolors=None, marker="s", s=20)
 
     ax.set_xlabel('x coordinate')
     ax.set_ylabel('y coordinate')
     ax.set_zlabel('z coordinate')
+
+    if conditional_points:
+        ax.scatter(conditional_points[0][:, 0],
+                   conditional_points[0][:, 1],
+                   conditional_points[0][:, 2], c=conditional_points[1], vmin=vmin, vmax=vmax, cmap="viridis")
 
     cax = ax.inset_axes((1.1, 0., 0.05, 1))
     norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
@@ -69,6 +79,7 @@ def plot2D(coordinates: List[npt.NDArray[np.float64]],
            conditioning_coordinates: List[npt.NDArray[np.float64]] = [],
            conditioning_values: List[npt.NDArray[np.float64]] = [],
            figsize: Tuple[float, float] = (6, 5),
+           conditional_points: Optional[List[npt.NDArray[np.float64]]] = None,
            show: bool = False):
     """
     Plots and saves 2D random field
@@ -81,10 +92,12 @@ def plot2D(coordinates: List[npt.NDArray[np.float64]],
         - output_name (str): Output fine name
         - colorbar_label (str): Label for the colorbar (optional, deafult = '')
         - conditioning_coordinates (List[npt.NDArray[np.float64]]): List of coordinates if the conditioning points
-        (optional, default = [])
+          (optional, default = [])
         - conditioning_values (List[npt.NDArray[np.float64]]): List of the values at the conditioning points
           (optional, default = [])
         - figsize (Tuple[float, float]): Figure size (optional, default = (6, 5))
+        - conditional_points (List[npt.NDArray[np.float64]]): List of the values at the conditioning points
+          (optional, default = None)
         - show (bool): Show the plot (optional, default = False)
     """
 
@@ -104,6 +117,7 @@ def plot2D(coordinates: List[npt.NDArray[np.float64]],
         x, y = coord[:, 0], coord[:, 1]
         ax.scatter(x, y, c=rfield[i], vmin=vmin, vmax=vmax, cmap="viridis", edgecolors=None, marker="s")
 
+    ax.set_aspect('auto')
     ax.set_xlabel('x coordinate')
     ax.set_ylabel('y coordinate')
 
@@ -117,6 +131,16 @@ def plot2D(coordinates: List[npt.NDArray[np.float64]],
                    cmap="viridis",
                    edgecolors='red',
                    linewidth=0.25)
+
+    if conditional_points:
+        ax.scatter(
+            conditional_points[0][:, 0],
+            conditional_points[0][:, 1],
+            c=conditional_points[1],
+            vmin=vmin,
+            vmax=vmax,
+            cmap="viridis",
+        )
 
     cax = ax.inset_axes((1.1, 0., 0.05, 1))
     norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
