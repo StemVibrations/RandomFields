@@ -14,21 +14,21 @@ Theory
 ......
 
 The processing of the CPT data is based on the following steps:
-* CPT data is read and interpreted into a set of point with coordinates `(x, y, z)` and corresponding interpreted
-  properties $z_{data}$ (e.g. shear wave velocity `vs` based on  tip resistance and sleeve friction).
-  The the distribution of the dataset $x_{data}$ is considered to be representative for the distribution
-  of the site $x\inX$.
+* CPT data is read and interpreted into a set of point with coordinates :math:`(x, y, z)` and corresponding interpreted
+  properties :math:`z_{data}` (e.g. shear wave velocity :math:`v_{s}` based on  tip resistance and sleeve friction).
+  The the distribution of the dataset :math:`x_{data}` is considered to be representative for the distribution
+  of the site.
 * A transfomration model is created based on the CPT data.
-  This transfomration model $X=T(Z)$ characterises the distribution of the physical stochastic parameter $X$
-  as a function of the standard-normal stochastic variable $Z \\sim N(0,1)$.
-  This model is used to create the standard-normal equivalent data $z_{data} = T^{-1}(x_{data})$
+  This transfomration model :math:`X=T(Z)` characterises the distribution of the physical stochastic parameter :math:`X`
+  as a function of the standard-normal stochastic variable :math:`Z \sim N(0,1)`.
+  This model is used to create the standard-normal equivalent data :math:`z_{data} = T^{-1}(x_{data})`
 * The standard-normal data is used to calibrate a Gaussian regression model.
   Sampling from this model provides the conditioned.
   Internally, the sampoling is performed in the traditional Kriging formulation,
   in which an unconditioned random field is conditioned to the conditioning data.
-  This takes place in the standard-normal space, resultin gin standar-normal fields $u_{field}$.
+  This takes place in the standard-normal space, resultin gin standar-normal fields :math:`u_{field}`.
 * The generated conditioned random fields are transformed to the parameter space using the
-  transformation model: $v_{field} = T(u_{field})$.
+  transformation model: :math:`v_{field} = T(u_{field})`
 
 
 Example
@@ -226,7 +226,7 @@ This grid is typically the mesh of a finite element calculation.
 To visualise the results we can make use of the `plot3D` function.
 
 .. code=block:: python
-    
+
     plot3D([np.array([X.ravel(), Y.ravel(), Z.ravel()]).T], [elastic_field_generator_cpt.generated_field[0]],
         title="Random Field",
         output_folder="./",
