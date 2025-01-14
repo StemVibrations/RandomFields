@@ -58,7 +58,7 @@ def test_distribution_RF_struc_3D(cleanup_generated_files):
     plot3D([np.array([x.ravel(), y.ravel(), z.ravel()]).T], [rf.random_field],
            title="Random Field",
            output_folder="./",
-           output_name="random_field.png")
+           output_name="random_field.eps")
 
     if sys.platform == "win32":
         file_test = "./tests/data/random_field_3D_windows.pickle"
@@ -70,5 +70,5 @@ def test_distribution_RF_struc_3D(cleanup_generated_files):
     with open(file_test, "rb") as fi:
         data_test = pickle.load(fi)
 
-    assert os.path.isfile("random_field.png")
+    assert os.path.isfile("random_field.eps")
     assert all(rf.random_field.field == data_test)
