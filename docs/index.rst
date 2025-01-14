@@ -17,7 +17,7 @@ Currently, the following covariance models are available:
 * Matern
 * Linear (not for conditioned random fields)
 
-Additional functoinalities are used to generate conditioned random fields.
+Additional functionalities are used to generate conditioned random fields.
 
 
 Tutorials
@@ -41,9 +41,10 @@ How to contribute
 If you want to contribute to RandomFields please follow the steps defined in :doc:`contributions`.
 
 
-STEM team
-=========
-STEM is a research programme that results from a collaboration between the following partners:
+Random Fields team
+==================
+The Random Field package is part of the STEM is a research programme that results from a
+collaboration between the following partners:
 
 * `ProRail <https://www.prorail.nl>`_
 * `Deltares <https://www.deltares.nl>`_

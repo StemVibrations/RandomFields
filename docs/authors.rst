@@ -1,7 +1,7 @@
 .. _authors:
 
-STEM team
-=========
+Random Fields team
+==================
 
 Maintainers
 -----------
