@@ -54,7 +54,7 @@ html_show_sourcelink = False
 html_context = {
     "display_github": True,
     "github_user": "StemVibrations",
-    "github_repo": "RanndomFields",
+    "github_repo": "RandomFields",
     "github_version": "main",
     "conf_py_path": "/docs/",
 }
