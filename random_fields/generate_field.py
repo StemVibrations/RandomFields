@@ -26,7 +26,7 @@ class RandomFields:
         - max_conditioning_points (int): maximum number of
         - random_field_model_name (str):
         - random_field_model (int):
-        - n_dim (int): number of physical dimesions (1,2 or 3)
+        - n_dim (int): number of physical dimensions (1,2 or 3)
         - seed (int): seed for the random number generator
         - mean (float): unconditioned mean of the random field
         - variance (float): unconditioned variance of the random field
