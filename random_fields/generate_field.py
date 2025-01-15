@@ -34,7 +34,7 @@ class RandomFields:
         - anisotropy (list): ratio between horizontal scales and vertical scale of fluctuation
         - angle (list): rotation angles of the principal directions of the scales of fluctuation relative to the
           vertical
-        - v_dim (int): dimesion number corresponding to the vertical scale of fluctuation
+        - v_dim (int): dimension number corresponding to the vertical scale of fluctuation
         - random_field (:class:gstools.SRF): random field generator
         - z_kriged_field (array): standard-normal kriged random field
         - gaussian_process (:class:sklearn.gaussian_process.GaussianProcessRegressor): Gaussian process regressor
