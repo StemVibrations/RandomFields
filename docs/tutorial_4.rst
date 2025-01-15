@@ -19,7 +19,7 @@ The processing of the CPT data is based on the following steps:
   The the distribution of the dataset :math:`x_{data}` is considered to be representative for the distribution
   of the site.
 * A transformation model is created based on the CPT data.
-  This transfomration model :math:`X=T(Z)` characterises the distribution of the physical stochastic parameter :math:`X`
+  This transformation model :math:`X=T(Z)` characterises the distribution of the physical stochastic parameter :math:`X`
   as a function of the standard-normal stochastic variable :math:`Z \sim N(0,1)`.
   This model is used to create the standard-normal equivalent data :math:`z_{data} = T^{-1}(x_{data})`
 * The standard-normal data is used to calibrate a Gaussian regression model.
