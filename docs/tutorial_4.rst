@@ -18,7 +18,7 @@ The processing of the CPT data is based on the following steps:
   properties :math:`z_{data}` (e.g. shear wave velocity :math:`v_{s}` based on  tip resistance and sleeve friction).
   The the distribution of the dataset :math:`x_{data}` is considered to be representative for the distribution
   of the site.
-* A transfomration model is created based on the CPT data.
+* A transformation model is created based on the CPT data.
   This transfomration model :math:`X=T(Z)` characterises the distribution of the physical stochastic parameter :math:`X`
   as a function of the standard-normal stochastic variable :math:`Z \sim N(0,1)`.
   This model is used to create the standard-normal equivalent data :math:`z_{data} = T^{-1}(x_{data})`
