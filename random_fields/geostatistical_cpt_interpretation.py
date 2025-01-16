@@ -596,15 +596,29 @@ class ElasticityFieldsFromCpt:
         self.generated_field: List[npt.NDArray[np.float64]] = []
         self.conditioning_sampled_data: List[npt.NDArray[np.float64]] = []
 
-    def calibrate_geostat_model(self, v_dim: int = 1, calibration_indices: Tuple[int, int] = (0, 1)) -> None:
+    def calibrate_geostat_model(self,
+                                v_dim: int = 1,
+                                calibration_indices: Tuple[bool, bool, bool] = (True, True, True)) -> None:
         """calibrates the geostatistical model
 
         Args:
             - v_dim (int): vertical dimension. Defaults to 1.
-            - calibration_indices (Tuple): _description_. Defaults to (0, 1).
+            - calibration_indices (Tuple[bool, bool, bool]): Calibration indices. Default (True, True, True).
+
+        Raises:
+            - ValueError: if calibration indices are not a tuple of three boolean values
+            - ValueError: if at least two calibration indices are not provided
         """
 
         np.random.seed(self.seed)
+
+        # Check that calibration indices are a tuple of three boolean values
+        if len(calibration_indices) != 3:
+            raise ValueError("Calibration indices should be a tuple of three boolean values")
+
+        # Check that at least two calibration indices are provided
+        if sum(calibration_indices) < 2:
+            raise ValueError("At least two calibration indices are required")
 
         ndim_calibrate = len(calibration_indices)
         self.coordinates_sampled_conditioning = np.zeros([self.max_conditioning_points, 3])
