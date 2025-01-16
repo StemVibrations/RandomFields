@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
+import pickle
 import os
+import sys
 from random_fields.generate_field import RandomFields, ModelName
 from random_fields.utils import plot2D, plot3D
 
@@ -24,7 +26,10 @@ def test_distribution_RF_struc(cleanup_generated_files):
     rf = RandomFields(ModelName.Gaussian, 2, 10, 2, 1, [1], [1], seed=14)
     rf.generate(np.array([x.ravel(), y.ravel()]).T)
 
-    plot2D([np.array([x.ravel(), y.ravel()]).T], [rf.random_field], title="Random Field", output_folder="./", output_name="random_field.eps")
+    plot2D([np.array([x.ravel(), y.ravel()]).T], [rf.random_field],
+           title="Random Field",
+           output_folder="./",
+           output_name="random_field.eps")
 
     with open("./tests/data/random_field.eps", "r") as fi:
         data_org = fi.read().splitlines()
@@ -37,7 +42,7 @@ def test_distribution_RF_struc(cleanup_generated_files):
     data = [val == data_new[header + i] for i, val in enumerate(data_org[header:idx_end])]
     assert all(data)
 
-@pytest.mark.skip(reason="3D plot not working on GitHub Actions")
+
 def test_distribution_RF_struc_3D(cleanup_generated_files):
     """test distribution of 3D random field with structured mesh"""
 
@@ -50,15 +55,20 @@ def test_distribution_RF_struc_3D(cleanup_generated_files):
     rf = RandomFields(ModelName.Gaussian, 3, 10, 2, 1, [1, 0.5], [1, 1], seed=14)
     rf.generate(np.array([x.ravel(), y.ravel(), z.ravel()]).T)
 
-    plot3D([np.array([x.ravel(), y.ravel(), z.ravel()]).T], [rf.random_field], title="Random Field", output_folder="./", output_name="random_field.eps")
+    plot3D([np.array([x.ravel(), y.ravel(), z.ravel()]).T], [rf.random_field],
+           title="Random Field",
+           output_folder="./",
+           output_name="random_field.eps")
 
-    with open("./tests/data/random_field_3D.eps", "r") as fi:
-        data_org = fi.read().splitlines()
+    if sys.platform == "win32":
+        file_test = "./tests/data/random_field_3D_windows.pickle"
+    elif sys.platform == "linux":
+        file_test = "./tests/data/random_field_3D_linux.pickle"
+    else:
+        raise Exception("Platform not supported")
 
-    with open("./random_field.eps", "r") as fi:
-        data_new = fi.read().splitlines()
+    with open(file_test, "rb") as fi:
+        data_test = pickle.load(fi)
 
-    header = 5
-    idx_end = data_org.index("currentfile DataString readhexstring pop")
-    data = [val == data_new[header + i] for i, val in enumerate(data_org[header:idx_end])]
-    assert all(data)
+    assert os.path.isfile("random_field.eps")
+    assert all(rf.random_field.field == data_test)
