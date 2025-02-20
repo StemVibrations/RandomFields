@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
+import pickle
 import os
+import sys
 import sys
 import pickle
 from random_fields.generate_field import RandomFields, ModelName
@@ -26,7 +28,10 @@ def test_distribution_RF_struc(cleanup_generated_files):
     rf = RandomFields(ModelName.Gaussian, 2, 10, 2, 1, [1], [1], seed=14)
     rf.generate(np.array([x.ravel(), y.ravel()]).T)
 
-    plot2D([np.array([x.ravel(), y.ravel()]).T], [rf.random_field], title="Random Field", output_folder="./", output_name="random_field.eps")
+    plot2D([np.array([x.ravel(), y.ravel()]).T], [rf.random_field],
+           title="Random Field",
+           output_folder="./",
+           output_name="random_field.eps")
 
     with open("./tests/data/random_field.eps", "r") as fi:
         data_org = fi.read().splitlines()

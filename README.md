@@ -75,7 +75,7 @@ plot2D([np.array([x.ravel(), y.ravel()]).T], [rf.random_field], title="Random Fi
 
 The result is the following random field:
 
-![Random field 2D](./docs/static/random_field.png)
+![Random field 2D](./docs/_static/random_field.png)
 
 ## Example in 3D
 
@@ -127,4 +127,4 @@ plot3D([np.array([x.ravel(), y.ravel(), z.ravel()]).T], [rf.random_field], title
 ```
 The result is the following random field:
 
-![Random field 3D](./docs/static/random_field_3D.png)
+![Random field 3D](./docs/_static/random_field_3D.png)
