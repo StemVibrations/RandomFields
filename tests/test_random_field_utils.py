@@ -3,6 +3,8 @@ import pytest
 import pickle
 import os
 import sys
+import sys
+import pickle
 from random_fields.generate_field import RandomFields, ModelName
 from random_fields.utils import plot2D, plot3D
 
@@ -41,7 +43,6 @@ def test_distribution_RF_struc(cleanup_generated_files):
     idx_end = data_org.index("currentfile DataString readhexstring pop")
     data = [val == data_new[header + i] for i, val in enumerate(data_org[header:idx_end])]
     assert all(data)
-
 
 def test_distribution_RF_struc_3D(cleanup_generated_files):
     """test distribution of 3D random field with structured mesh"""
