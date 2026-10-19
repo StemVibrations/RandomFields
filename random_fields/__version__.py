@@ -1,3 +1,3 @@
 __title__ = "Random Fields Generator"
-__version__ = "1.0.2"
+__version__ = "1.0.3a"
 __author__ = "STEM team"
